@@ -944,7 +944,10 @@ export function StudentsView({
                             >
                               {learnerName(learner)}
                             </Link>
-                            <p className="font-mono text-[11px] text-muted-foreground">{learner.learner_id}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              <span className="font-sans font-medium text-foreground/70">LRN:</span>{" "}
+                              <span className="font-mono">{learner.learner_id}</span>
+                            </p>
                             {/*
                              * No status badge here. The Status column already
                              * says it, and saying it twice is what produced a

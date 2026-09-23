@@ -94,7 +94,10 @@ export function StudentDetailView({ student, progress }) {
           {name}
         </h1>
         <span aria-hidden="true" className="mt-1 h-0.5 w-16 bg-primary" />
-        <p className="font-mono text-sm text-muted-foreground">{student?.learner_id}</p>
+        <p className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">LRN:</span>{" "}
+          <span className="font-mono">{student?.learner_id ?? "—"}</span>
+        </p>
       </header>
 
       {isDropped(student) ? (
@@ -117,7 +120,10 @@ export function StudentDetailView({ student, progress }) {
             >
               Enrollment
             </h2>
-            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <Fact label="LRN">
+                <span className="font-mono font-medium">{student?.learner_id ?? "—"}</span>
+              </Fact>
               <Fact label="Grade">{student?.grade_name ?? MVP_GRADE_NAME}</Fact>
               <Fact label="Section">{student?.section_name ?? "No section assigned"}</Fact>
               <Fact label="Diagnostic">

@@ -86,7 +86,7 @@ export function StudentDrillDownModal({ open, student, currentCaseId = null, onC
             {student.full_name ?? "Unknown learner"} — intervention history
           </DialogTitle>
           <DialogDescription>
-            {student.learner_id ? `${student.learner_id} · ` : ""}
+            {student.learner_id ? `LRN: ${student.learner_id} · ` : ""}
             {student.section_name ? `Section ${student.section_name}` : "Unassigned section"}
           </DialogDescription>
         </DialogHeader>

@@ -137,6 +137,7 @@ export function InterventionCaseTable({
                       <div>
                         <div className="font-semibold text-foreground">{item.student.full_name}</div>
                         <div className="text-xs text-muted-foreground">
+                          {item.student.learner_id ? `LRN: ${item.student.learner_id} · ` : ""}
                           {item.student.section_name ? `Section ${item.student.section_name}` : "No section"}
                         </div>
                       </div>

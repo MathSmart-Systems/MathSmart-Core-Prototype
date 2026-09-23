@@ -177,6 +177,7 @@ export function InterventionCaseView({ caseDetail: initialDetail, filters, at = 
               {student.full_name ?? "Unknown learner"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
+              {student.learner_id ? `LRN: ${student.learner_id} · ` : ""}
               {student.section_name ? `Section ${student.section_name}` : "No section"} ·{" "}
               {competency.name ?? "Competency"}
               {competency.code ? ` (${competency.code})` : ""}
