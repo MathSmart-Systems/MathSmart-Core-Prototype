@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 
@@ -25,6 +26,7 @@ import { caseHref } from "../utils/intervention-helpers";
  */
 export function CaseRowMenu({ item, filters = null, onQuickStatus, disabled = false }) {
   const [requested, setRequested] = useState(false);
+  const [coords, setCoords] = useState(null);
   // A disabled queue closes the menu beneath the pointer. Deriving the open
   // state keeps that edge from needing an effect, and the menu cannot outlive
   // the state that disabled it.
@@ -48,17 +50,32 @@ export function CaseRowMenu({ item, filters = null, onQuickStatus, disabled = fa
 
   const closeMenu = useCallback((refocus) => {
     setRequested(false);
+    setCoords(null);
     if (refocus) triggerRef.current?.focus();
   }, []);
 
   useEffect(() => {
     if (!open) return undefined;
 
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < 150 && rect.top > 150;
+      
+      setCoords({
+        top: openUpwards ? rect.top - 4 : rect.bottom + 4,
+        right: document.documentElement.clientWidth - rect.right,
+        openUpwards,
+      });
+    }
+
     const focusFirst = () => menuItems()[0]?.focus();
     const frame = requestAnimationFrame(focusFirst);
 
     const handlePointerDown = (event) => {
-      if (rootRef.current && !rootRef.current.contains(event.target)) {
+      const clickedTrigger = rootRef.current && rootRef.current.contains(event.target);
+      const clickedMenu = menuRef.current && menuRef.current.contains(event.target);
+      if (!clickedTrigger && !clickedMenu) {
         closeMenu(false);
       }
     };
@@ -69,12 +86,20 @@ export function CaseRowMenu({ item, filters = null, onQuickStatus, disabled = fa
       }
     };
 
+    const handleScroll = () => {
+      closeMenu(false);
+    };
+
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", handleScroll, { capture: true });
+      window.removeEventListener("resize", handleScroll);
     };
   }, [open, closeMenu, menuItems]);
 
@@ -111,21 +136,30 @@ export function CaseRowMenu({ item, filters = null, onQuickStatus, disabled = fa
         aria-expanded={open}
         aria-controls={open ? "case-row-menu" : undefined}
         aria-label={`Quick actions for ${item?.student?.full_name ?? "this learner"}`}
-        onClick={() => setRequested((current) => !current)}
+        onClick={() => {
+          if (requested) setCoords(null);
+          setRequested((current) => !current);
+        }}
         disabled={disabled}
         className="inline-flex size-8 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-input hover:bg-muted/40 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-60"
       >
         <MoreHorizontal aria-hidden="true" className="size-4" />
       </button>
 
-      {open ? (
+      {open && coords ? createPortal(
         <div
           id="case-row-menu"
           ref={menuRef}
           role="menu"
           aria-label="Quick actions"
           onKeyDown={handleMenuKeyDown}
-          className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg"
+          style={{
+            position: "fixed",
+            zIndex: 50,
+            right: coords.right,
+            ...(coords.openUpwards ? { bottom: window.innerHeight - coords.top } : { top: coords.top }),
+          }}
+          className="w-52 overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg"
         >
           {canMarkInProgress ? (
             <button
@@ -156,7 +190,8 @@ export function CaseRowMenu({ item, filters = null, onQuickStatus, disabled = fa
             {status === "Resolved" ? "Reopen case…" : "Record action…"}
             <ChevronRight aria-hidden="true" className="ml-auto size-3.5" />
           </Link>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </div>
   );

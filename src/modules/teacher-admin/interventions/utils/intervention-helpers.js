@@ -416,6 +416,9 @@ export function suggestionFailure(result, { caseClosed = false } = {}) {
   if (status === 404 || code === "api_unconfigured") {
     return "Suggestions are not available here yet. The case is unchanged.";
   }
+  if (status === 503 || code === "groq_assistance_unavailable") {
+    return "AI is currently busy, please try again in a minute. Your notes and the evidence are unchanged.";
+  }
   return "The suggestion could not be produced just now. Your notes and the evidence are unchanged.";
 }
 
