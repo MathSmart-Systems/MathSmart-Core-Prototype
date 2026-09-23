@@ -32,6 +32,7 @@ export function useCaseSuggestion(
   { caseClosed = false, onFailure } = {},
 ) {
   const [generating, setGenerating] = useState(false);
+  const generatingRef = useRef(false);
   const report = useRef(onFailure);
 
   useEffect(() => {
@@ -39,8 +40,9 @@ export function useCaseSuggestion(
   });
 
   const generate = useCallback(async () => {
-    if (!interventionId) return;
+    if (!interventionId || generatingRef.current) return;
 
+    generatingRef.current = true;
     setGenerating(true);
     try {
       const result = await generateInterventionSuggestion(interventionId);
@@ -56,6 +58,7 @@ export function useCaseSuggestion(
       // teacher needs the same sentence either way.
       report.current?.(suggestionFailure({ code: "unreachable" }, { caseClosed }));
     } finally {
+      generatingRef.current = false;
       setGenerating(false);
     }
   }, [caseClosed, interventionId, onUpdated]);
