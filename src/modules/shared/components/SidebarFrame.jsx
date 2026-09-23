@@ -6,7 +6,6 @@ import { Menu, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 
 import { Wordmark } from "./Wordmark";
-import { SignOutButton } from "./SignOutButton";
 
 function SidebarBody({ workspace, email, renderNav, onNavigate }) {
   return (
@@ -30,14 +29,13 @@ function SidebarBody({ workspace, email, renderNav, onNavigate }) {
         {renderNav(onNavigate)}
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-shell-border px-4 py-4">
-        {email ? (
+      {email ? (
+        <div className="border-t border-shell-border px-4 py-4">
           <p className="truncate text-xs text-shell-muted" title={email}>
             Signed in as {email}
           </p>
-        ) : null}
-        <SignOutButton />
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
