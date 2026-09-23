@@ -58,6 +58,9 @@ INSTRUCTIONS = (
     '"next_check" (one short sentence naming how the teacher can tell it '
     "worked). "
     "Keep the whole object under 120 words. Use plain classroom English. "
+    "Never show database field names, snake_case, API labels, or technical "
+    "identifiers such as diagnostic_score or attempt_count. Say 'initial "
+    "check', 'current result', and 'recorded attempts' instead. "
     "Never use asterisks, hashes, bullet characters, tables, links or any "
     "other markup. Do not repeat a point, do not summarise at the end, and do "
     "not add encouragement or motivational remarks."
@@ -68,6 +71,21 @@ _MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
 _SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+")
 _NUMBER = re.compile(r"\d+(?:\.\d+)?")
 _WORD = re.compile(r"\S+")
+_BACKEND_FIELD = re.compile(
+    r"\b(?:diagnostic_score|current_score|attempt_count|unsuccessful_attempts|"
+    r"competency_id|incorrect_patterns|completed_modules|display_context)\b",
+    re.I,
+)
+_TEACHER_LABELS = {
+    "diagnostic_score": "initial check",
+    "current_score": "current result",
+    "attempt_count": "recorded attempts",
+    "unsuccessful_attempts": "unsuccessful attempts",
+    "competency_id": "curriculum reference",
+    "incorrect_patterns": "learning patterns",
+    "completed_modules": "completed work",
+    "display_context": "recorded context",
+}
 
 #: Sentences that add length and nothing a teacher can act on. Matched per
 #: sentence, so a useful sentence is never lost because of its neighbour.
@@ -109,6 +127,12 @@ def _plain(value: Any) -> str:
     text = flatten(text)
     kept = [part for part in _sentences(text) if not _FILLER.search(part)]
     return " ".join(kept).strip()
+
+
+def _teacher_text(value: Any) -> str:
+    """Replace implementation labels before any prose reaches a teacher."""
+    text = _plain(value)
+    return _BACKEND_FIELD.sub(lambda match: _TEACHER_LABELS[match.group().lower()], text)
 
 
 def _sentences(text: str) -> list[str]:
@@ -221,17 +245,22 @@ def _is_recorded(item: str, figures: set[float]) -> bool:
     return bool(found) and all(number in figures for number in found)
 
 
+def _uses_backend_field_name(text: str) -> bool:
+    """Reject implementation labels rather than rendering them to a teacher."""
+    return bool(_BACKEND_FIELD.search(text))
+
+
 def evidence_from_record(evidence: dict[str, Any]) -> list[str]:
     """The evidence written from the recorded numbers alone."""
     lines: list[str] = []
     diagnostic = _figure(evidence.get("diagnostic_score"))
     current = _figure(evidence.get("current_score"))
     if diagnostic is not None and current is not None:
-        lines.append(f"Diagnostic score {diagnostic}%, current score {current}%.")
+        lines.append(f"Initial check: {diagnostic}%; current result: {current}%.")
     elif current is not None:
-        lines.append(f"Current score {current}%.")
+        lines.append(f"Current result: {current}%.")
     elif diagnostic is not None:
-        lines.append(f"Diagnostic score {diagnostic}%.")
+        lines.append(f"Initial check: {diagnostic}%.")
 
     attempts = _figure(evidence.get("attempt_count"))
     unsuccessful = _figure(evidence.get("unsuccessful_attempts"))
@@ -280,19 +309,21 @@ def parse_teaching_note(text: str | None, evidence: dict[str, Any]) -> TeachingN
 
     gap = ""
     claimed: list[str] = []
+    raw_claimed: list[str] = []
     actions: list[str] = []
     check: str | None = None
 
     if isinstance(parsed, dict):
-        gap = _first_sentences(_plain(parsed.get("gap")), MAX_GAP_SENTENCES, MAX_GAP)
-        claimed = [
+        gap = _first_sentences(_teacher_text(parsed.get("gap")), MAX_GAP_SENTENCES, MAX_GAP)
+        raw_claimed = [
             clip(_plain(item), MAX_EVIDENCE_ITEM) for item in _as_list(parsed.get("evidence"))
         ]
+        claimed = [clip(_teacher_text(item), MAX_EVIDENCE_ITEM) for item in raw_claimed]
         actions = [
-            clip(_plain(item), MAX_ACTION)
+            clip(_teacher_text(item), MAX_ACTION)
             for item in _as_list(parsed.get("actions") or parsed.get("strategies"))
         ]
-        check = _first_sentences(_plain(parsed.get("next_check")), 1, MAX_NEXT_CHECK) or None
+        check = _first_sentences(_teacher_text(parsed.get("next_check")), 1, MAX_NEXT_CHECK) or None
         if not gap and actions:
             gap, actions = actions[0], actions[1:]
 
@@ -308,7 +339,11 @@ def parse_teaching_note(text: str | None, evidence: dict[str, Any]) -> TeachingN
         check = None
 
     seen = [_key(gap)]
-    honest = [item for item in claimed if item and _is_recorded(item, figures)]
+    honest = [
+        item
+        for raw, item in zip(raw_claimed, claimed, strict=True)
+        if item and not _uses_backend_field_name(raw) and _is_recorded(item, figures)
+    ]
     evidence_lines = _without_repeats(honest, seen)[:MAX_EVIDENCE]
     if not evidence_lines:
         evidence_lines = _without_repeats(evidence_from_record(evidence), seen)

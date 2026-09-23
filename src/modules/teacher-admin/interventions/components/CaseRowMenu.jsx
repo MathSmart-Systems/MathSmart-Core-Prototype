@@ -142,7 +142,7 @@ export function CaseRowMenu({ item, filters = null, onQuickStatus, disabled = fa
               type="button"
               role="menuitem"
               onClick={() => run(() => onQuickStatus(item.id, "Resolved"))}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-semibold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-muted/40"
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-semibold text-primary transition-colors hover:bg-muted/40"
             >
               Mark Resolved
             </button>

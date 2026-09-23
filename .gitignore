@@ -56,3 +56,6 @@ env/
 # local scratch
 .opencode/
 feature-f2/
+backup/
+*_PROMPT.md
+AI_PROGRESS_TRACKER.md

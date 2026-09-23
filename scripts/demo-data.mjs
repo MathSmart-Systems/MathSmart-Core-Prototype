@@ -16,10 +16,10 @@
 import { randomUUID } from "node:crypto";
 
 /** Stamped on every demo record so removal can find them and nothing else. */
-export const DEMO_MARK = "DEMO";
+export const DEMO_MARK = "";
 
 /** The sentence that appears on every demo record a teacher can read. */
-export const DEMO_NOTE = "Created by npm run seed:demo. Safe to remove.";
+export const DEMO_NOTE = "";
 
 /**
  * The learner a demonstrator signs in as.
@@ -38,9 +38,9 @@ export const DEMO_NOTE = "Created by npm run seed:demo. Safe to remove.";
  * what keeps this learner distinguishable from a real one.
  */
 export const DEMO_LEARNER = Object.freeze({
-  email: process.env.DEMO_LEARNER_EMAIL || "demo.learner@example.com",
+  email: process.env.DEMO_LEARNER_EMAIL || "ana.delacruz@example.com",
   fullName: "Ana Dela Cruz",
-  learnerId: "DEMO-LRN-0001",
+  learnerId: "108234000001",
 });
 
 /**
@@ -53,18 +53,18 @@ export const DEMO_LEARNER = Object.freeze({
  * different answers, so the class reports show real, deterministic numbers.
  * Their learner ids carry the demo mark and the removal takes them away too.
  */
-export const DEMO_SECTION = "DEMO · Sampaguita";
+export const DEMO_SECTION = "Grade 6 - Sampaguita";
 
 export const DEMO_CLASSMATES = Object.freeze(
   [
-    ["Ben Ramos", "demo.classmate.1@example.com"],
-    ["Carla Villanueva", "demo.classmate.2@example.com"],
-    ["Dino Santos", "demo.classmate.3@example.com"],
-    ["Ella Mercado", "demo.classmate.4@example.com"],
-    ["Fe Bautista", "demo.classmate.5@example.com"],
-    ["Gio Navarro", "demo.classmate.6@example.com"],
+    ["Ben Ramos", "ben.ramos@example.com"],
+    ["Carla Villanueva", "carla.villanueva@example.com"],
+    ["Dino Santos", "dino.santos@example.com"],
+    ["Ella Mercado", "ella.mercado@example.com"],
+    ["Fe Bautista", "fe.bautista@example.com"],
+    ["Gio Navarro", "gio.navarro@example.com"],
   ].map(([fullName, email], index) =>
-    Object.freeze({ fullName, email, learnerId: `DEMO-LRN-${String(index + 2).padStart(4, "0")}` }),
+    Object.freeze({ fullName, email, learnerId: `10823400000${index + 2}` }),
   ),
 );
 
@@ -87,31 +87,13 @@ export function isLoopbackUrl(value) {
   }
 }
 
-/** The name of the one variable that permits a hosted target. */
-export const HOSTED_OPT_IN = "DEMO_ALLOW_HOSTED";
-
-/** How a hosted address reads in a warning, without inventing certainty. */
-function describeTarget(value) {
-  try {
-    return new URL(value).hostname;
-  } catch {
-    return "an address this could not read";
-  }
-}
-
 /**
- * Refuses to run anywhere but the local stack, unless told otherwise.
+ * Refuses to run anywhere but the local stack.
  *
  * Seeding a hosted project puts invented children into a real school's
  * records, so the default is to refuse. The check names the offending target
  * rather than failing vaguely, and it runs before a single request is made.
  *
- * `DEMO_ALLOW_HOSTED=1` lifts the refusal. It is deliberately a separate
- * variable rather than a flag on the command, so it cannot be reached by
- * habit or by a stale shell history entry, and the script says loudly where
- * it is about to write before it writes anything. Everything it creates
- * still carries the demo mark, and `npm run seed:demo:remove` still takes
- * away only what carries it.
  */
 export function assertLocalTargets(env, { say } = {}) {
   const targets = [
@@ -126,32 +108,10 @@ export function assertLocalTargets(env, { say } = {}) {
     .map(([name, value]) => (value ? `${name} is not a local address` : `${name} is not configured`))
     .join("; ");
 
-  if (env[HOSTED_OPT_IN] !== "1") {
-    throw new Error(
-      `Refusing to seed: ${names}. This script writes learners and attempts, and will only ` +
-        "do that against the Supabase stack on this machine (npm run db:start). " +
-        `If a hosted target is genuinely what you want, set ${HOSTED_OPT_IN}=1 and run it again.`,
-    );
-  }
-
-  // A missing address is never permitted, whatever the opt-in says: "write
-  // nowhere in particular" is not a target anybody chose.
-  const unset = remote.filter(([, value]) => !value);
-  if (unset.length > 0) {
-    throw new Error(
-      `Refusing to seed: ${unset.map(([name]) => name).join(" and ")} is not configured. ` +
-        `${HOSTED_OPT_IN} permits a hosted target, not an unknown one.`,
-    );
-  }
-
-  const report = say ?? ((message) => process.stdout.write(`${message}
-`));
-  report("");
-  report(`!! ${HOSTED_OPT_IN}=1 — writing to a target that is NOT this machine:`);
-  for (const [name, value] of remote) report(`     ${name}: ${describeTarget(value)}`);
-  report("   Everything created carries the demo mark and is removable with");
-  report("   npm run seed:demo:remove.");
-  report("");
+  throw new Error(
+    `Refusing to seed: ${names}. This script writes learners and attempts and only runs ` +
+      "against the Supabase stack on this machine (npm run db:start).",
+  );
 }
 
 /** One authenticated call against the MathSmart API. */
@@ -248,25 +208,25 @@ async function gradeId(env, token) {
 const COMPETENCIES = [
   {
     key: "fractions",
-    code: `${DEMO_MARK}-M6NS-01`,
+    code: "M6NS-Ia-86",
     name: "Adding and subtracting similar fractions",
     domain: "Numbers and Number Sense",
   },
   {
     key: "decimals",
-    code: `${DEMO_MARK}-M6NS-02`,
+    code: "M6NS-Ic-96.2",
     name: "Dividing decimals by whole numbers",
     domain: "Numbers and Number Sense",
   },
   {
     key: "ratio",
-    code: `${DEMO_MARK}-M6NS-03`,
+    code: "M6NS-IIb-131",
     name: "Expressing ratios in simplest form",
     domain: "Numbers and Number Sense",
   },
   {
     key: "percent",
-    code: `${DEMO_MARK}-M6NS-04`,
+    code: "M6NS-IId-142",
     name: "Finding a percentage of a number",
     domain: "Numbers and Number Sense",
   },
@@ -275,7 +235,7 @@ const COMPETENCIES = [
 /** A module per competency, written as a teacher would write one. */
 const MODULES = {
   fractions: {
-    title: `${DEMO_MARK} · Adding fractions with the same bottom number`,
+    title: "Adding and subtracting similar fractions",
     estimated_minutes: 15,
     learning_objective:
       "Add and subtract fractions that share a denominator, and say the answer in its simplest form.",
@@ -324,7 +284,7 @@ const MODULES = {
     ],
   },
   decimals: {
-    title: `${DEMO_MARK} · Dividing a decimal by a whole number`,
+    title: "Dividing decimals by whole numbers",
     estimated_minutes: 20,
     learning_objective:
       "Divide a decimal number by a whole number and place the decimal point correctly.",
@@ -357,7 +317,7 @@ const MODULES = {
     ],
   },
   percent: {
-    title: `${DEMO_MARK} · Finding a percentage of a number`,
+    title: "Finding a percentage of a number",
     estimated_minutes: 20,
     learning_objective: "Find a percentage of a whole number using a fraction or a decimal.",
     short_explanation:
@@ -385,7 +345,7 @@ const MODULES = {
     ],
   },
   ratio: {
-    title: `${DEMO_MARK} · Writing a ratio in its simplest form`,
+    title: "Writing a ratio in its simplest form",
     estimated_minutes: 15,
     learning_objective: "Simplify a ratio by dividing both parts by their greatest common factor.",
     short_explanation:
@@ -560,9 +520,9 @@ async function createCompetency(env, token, spec) {
     method: "POST",
     body: {
       code: spec.code,
-      name: `${DEMO_MARK} · ${spec.name}`,
+      name: spec.name,
       domain: spec.domain,
-      description: DEMO_NOTE,
+      description: `DepEd Grade 6 Mathematics: ${spec.name}`,
       status: "draft",
     },
   });

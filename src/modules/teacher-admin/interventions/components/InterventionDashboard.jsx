@@ -157,8 +157,8 @@ export function InterventionDashboard({
   return (
     <div ref={listRef} className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
-        <p className="inline-flex w-fit items-center gap-2 rounded-full bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300">
-          <AlertTriangle aria-hidden="true" className="size-3.5" />
+        <p className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-secondary/80 px-3 py-1 text-xs font-medium text-secondary-foreground">
+          <AlertTriangle aria-hidden="true" className="size-3.5 text-primary" />
           ARAL Targeted Pedagogical Remediation
         </p>
         <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
@@ -218,7 +218,7 @@ export function InterventionDashboard({
             disabled={bulkBusy || eligibleForStatus(selectedCases, "Resolved").length === 0}
             className={BULK_BUTTON_STYLE}
           >
-            <CheckCircle2 aria-hidden="true" className="size-3.5 text-emerald-700" />
+            <CheckCircle2 aria-hidden="true" className="size-3.5 text-primary" />
             Mark Resolved
           </button>
           <button

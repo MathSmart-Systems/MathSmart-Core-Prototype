@@ -9,7 +9,7 @@ export function TeacherAdminSidebar({ email }) {
     <SidebarFrame
       workspace={TEACHER_ADMIN_WORKSPACE}
       email={email}
-      homeHref="/teacher/dashboard"
+      homeHref="/teacher/students"
       renderNav={(onNavigate) => (
         <SidebarNav groups={TEACHER_ADMIN_NAV} onNavigate={onNavigate} />
       )}

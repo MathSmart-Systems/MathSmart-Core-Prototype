@@ -10,6 +10,7 @@ const { loadEnvConfig } = nextEnv.default ?? nextEnv;
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const backendDirectory = resolve(repositoryRoot, "backend");
 const environmentFile = resolve(repositoryRoot, ".env");
+const localEnvironmentFile = resolve(repositoryRoot, ".env.local");
 
 const virtualEnvironmentPython =
   process.platform === "win32"
@@ -34,9 +35,9 @@ if (!pythonExecutable) {
   process.exit(1);
 }
 
-if (!existsSync(environmentFile)) {
+if (!existsSync(environmentFile) && !existsSync(localEnvironmentFile)) {
   console.error(
-    "MathSmart could not find the repository .env file. Create it from .env.example, then run npm run dev again.",
+    "MathSmart could not find .env or .env.local. Create .env.local from .env.example, then run npm run dev again.",
   );
   process.exit(1);
 }

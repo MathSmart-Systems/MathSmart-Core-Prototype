@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AUTH_NOTICE, loginPathWithNotice } from "@/lib/auth/notices";
-import { LOGIN_PATH, homePathForRole } from "@/lib/auth/roles";
+import { ROLES, homePathForRole } from "@/lib/auth/roles";
 import { getVerifiedSession } from "@/modules/auth";
 
 export const dynamic = "force-dynamic";
@@ -10,20 +9,8 @@ export const dynamic = "force-dynamic";
 export default async function RootPage() {
   const session = await getVerifiedSession();
 
-  if (session.status === "unconfigured") {
-    redirect(loginPathWithNotice(AUTH_NOTICE.CONFIGURATION));
-  }
-
-  if (session.status === "unavailable") {
-    redirect(loginPathWithNotice(AUTH_NOTICE.SERVICE));
-  }
-
-  if (session.status === "anonymous") {
-    redirect(LOGIN_PATH);
-  }
-
-  if (!session.role) {
-    redirect(loginPathWithNotice(AUTH_NOTICE.NO_WORKSPACE));
+  if (session.status !== "authenticated" || session.role !== ROLES.TEACHER_ADMIN) {
+    redirect("/api/local-session?next=/teacher/students");
   }
 
   redirect(homePathForRole(session.role));

@@ -43,13 +43,36 @@ const SINGULAR = {
   competencies: "competency",
 };
 
+const KNOWN_CODES = new Set([
+  "M6NS-Ia-86",
+  "M6NS-Ic-96.2",
+  "M6NS-IIb-131",
+  "M6NS-IId-142",
+  "DEMO-M6NS-01",
+  "DEMO-M6NS-02",
+  "DEMO-M6NS-03",
+  "DEMO-M6NS-04",
+]);
+
+const KNOWN_SECTIONS = new Set([
+  "Grade 6 - Sampaguita",
+  "DEMO · Sampaguita",
+  "Sampaguita",
+]);
+
 /** Whether a record was made by the demo seed. */
 function isDemo(row) {
   const code = typeof row.code === "string" ? row.code : "";
   const title = typeof row.title === "string" ? row.title : "";
   const prompt = typeof row.prompt === "string" ? row.prompt : "";
   const name = typeof row.name === "string" ? row.name : "";
-  return [code, title, prompt, name].some((value) => value.includes(DEMO_MARK));
+  return (
+    KNOWN_CODES.has(code) ||
+    KNOWN_SECTIONS.has(name) ||
+    title.includes("Grade 6 Mathematics Diagnostic") ||
+    title.includes("Fractions Unit Quiz") ||
+    [code, title, prompt, name].some((value) => value.includes("DEMO"))
+  );
 }
 
 /** Every page of one resource, across all publication states. */
@@ -144,12 +167,12 @@ async function removeLearner(token, failures, spec = DEMO_LEARNER, label = "the 
 async function main() {
   assertLocalTargets(env);
 
-  const teacherEmail = env.E2E_TEACHER_ADMIN_EMAIL;
-  const teacherPassword = env.E2E_TEACHER_ADMIN_PASSWORD;
+  const teacherEmail = env.E2E_TEACHER_ADMIN_EMAIL || env.LOCAL_TEACHER_ADMIN_EMAIL;
+  const teacherPassword = env.E2E_TEACHER_ADMIN_PASSWORD || env.LOCAL_TEACHER_ADMIN_PASSWORD;
   if (!teacherEmail || !teacherPassword) {
     throw new Error(
       "A Teacher/Administrator account is needed to remove the demo content. Set " +
-        "E2E_TEACHER_ADMIN_EMAIL and E2E_TEACHER_ADMIN_PASSWORD for the local stack.",
+        "LOCAL_TEACHER_ADMIN_EMAIL and LOCAL_TEACHER_ADMIN_PASSWORD in .env.local.",
     );
   }
 
@@ -160,6 +183,10 @@ async function main() {
   await removeLearner(token, failures);
   for (const classmate of DEMO_CLASSMATES) {
     await removeLearner(token, failures, classmate, `classmate ${classmate.learnerId}`);
+  }
+  for (let i = 1; i <= 7; i += 1) {
+    const legacyId = `DEMO-LRN-${String(i).padStart(4, "0")}`;
+    await removeLearner(token, failures, { learnerId: legacyId }, `legacy learner ${legacyId}`);
   }
 
   // The demo competencies, found first: a demo question is one that belongs to

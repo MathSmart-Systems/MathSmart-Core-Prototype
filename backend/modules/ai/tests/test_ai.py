@@ -204,19 +204,6 @@ def test_identifying_evidence_never_reaches_the_prompt():
     assert "email" not in sent
 
 
-def test_student_feedback_is_available_to_a_learner():
-    client = ai_client()
-
-    response = client.post(
-        "/api/v1/ai/student-feedback",
-        json={"score": 60, "competency_id": str(COMPETENCY)},
-        headers=LEARNER_HEADERS,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["data"]["feedback_text"] == "Advisory text."
-
-
 def test_teacher_insight_is_not_available_to_a_learner():
     client = ai_client()
 
@@ -229,47 +216,11 @@ def test_teacher_insight_is_not_available_to_a_learner():
     assert response.status_code == 403
 
 
-def test_an_incorrect_answer_explanation_cannot_change_a_verdict():
-    """The response carries no is_correct and no score: it is words, not a grade."""
-    client = ai_client()
-
-    response = client.post(
-        "/api/v1/ai/incorrect-answer-explanation",
-        json={
-            "question_text": "What is (-9) x (-8)?",
-            "submitted_answer": "-72",
-            "is_correct": False,
-        },
-        headers=LEARNER_HEADERS,
-    )
-
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert "is_correct" not in data
-    assert "score" not in data
-
-
-def test_remediation_support_answers_an_educator():
-    client = ai_client()
-
-    response = client.post(
-        "/api/v1/ai/remediation-support",
-        json={"competency_id": str(COMPETENCY), "current_score": 35},
-        headers=ADVISER_HEADERS,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["data"]["recommended_module_title"]
-
-
 @pytest.mark.parametrize(
     "path",
     [
         "/api/v1/ai/pattern-analysis",
-        "/api/v1/ai/student-feedback",
-        "/api/v1/ai/incorrect-answer-explanation",
         "/api/v1/ai/teacher-insight",
-        "/api/v1/ai/remediation-support",
     ],
 )
 def test_every_ai_route_needs_a_token(path):

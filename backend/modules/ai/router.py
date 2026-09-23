@@ -18,14 +18,11 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 
-from app.dependencies import CurrentActor, TeacherAdmin
+from app.dependencies import TeacherAdmin
 from middleware.errors import ApiError
 from modules.ai import teaching_note
 from modules.ai.schemas import (
-    AnswerExplanationRequest,
     PatternAnalysisRequest,
-    RemediationRequest,
-    StudentFeedbackRequest,
     TeacherInsightRequest,
 )
 from modules.ai.service import (
@@ -57,37 +54,6 @@ async def pattern_analysis(
             **provenance_of(result),
         }
     }
-
-
-@router.post("/ai/student-feedback")
-async def student_feedback(
-    actor: CurrentActor, request: Request, body: StudentFeedbackRequest
-) -> dict[str, Any]:
-    """Encouraging phrasing for a score that has already been decided."""
-    result = await request_advice(request, purpose="student feedback", model=body, actor=actor)
-    return {
-        "data": {
-            "feedback_text": result.text,
-            "friendly_tip": None,
-            "encouragement": None,
-            **provenance_of(result),
-        }
-    }
-
-
-@router.post("/ai/incorrect-answer-explanation")
-async def incorrect_answer_explanation(
-    actor: CurrentActor, request: Request, body: AnswerExplanationRequest
-) -> dict[str, Any]:
-    """A bounded explanation for a completed answer check.
-
-    The verdict is an input, not an output: this response has no `is_correct`
-    and no score, so it cannot change either.
-    """
-    result = await request_advice(
-        request, purpose="incorrect answer explanation", model=body, actor=actor
-    )
-    return {"data": {"explanation": result.text, **provenance_of(result)}}
 
 
 @router.post("/ai/teacher-insight")
@@ -128,22 +94,5 @@ async def teacher_insight(
             "learning_gaps": [],
             "suggested_intervention_type": None,
             "urgency_level": None,
-        }
-    }
-
-
-@router.post("/ai/remediation-support")
-async def remediation_support(
-    actor: TeacherAdmin, request: Request, body: RemediationRequest
-) -> dict[str, Any]:
-    """Advisory remediation suggestions for an educator."""
-    result = await request_advice(request, purpose="remediation support", model=body, actor=actor)
-    return {
-        "data": {
-            "recommended_module_title": result.text,
-            "targeted_practice_focus": None,
-            "visual_metaphor_advice": None,
-            "scaffolding_steps": [],
-            **provenance_of(result),
         }
     }

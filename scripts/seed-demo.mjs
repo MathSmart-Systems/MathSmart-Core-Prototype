@@ -189,7 +189,7 @@ async function ensureActivities(token, moduleIds, questionIds) {
   const ids = {};
 
   for (const spec of COMPETENCIES) {
-    const title = `${DEMO_MARK} · ${MODULES[spec.key].title.replace(`${DEMO_MARK} · `, "")} — practice`;
+    const title = `${MODULES[spec.key].title} — Practice`;
     const already = findMarked(existing, "title", title);
     if (already) {
       const id = already.activity_id ?? already.id;
@@ -203,7 +203,7 @@ async function ensureActivities(token, moduleIds, questionIds) {
       body: {
         module_id: moduleIds[spec.key],
         title,
-        description: `Practise what the lesson showed you. ${DEMO_NOTE}`,
+        description: "Practise what the lesson showed you.",
         estimated_minutes: 10,
         points: 10,
         mastery_threshold: 75,
@@ -231,10 +231,10 @@ async function ensureAssessments(token, questionIds) {
   const wanted = [
     {
       key: "diagnostic",
-      title: `${DEMO_MARK} · Grade 6 Mathematics Diagnostic`,
+      title: "Grade 6 Mathematics Diagnostic",
       assessment_type: "diagnostic",
       duration_minutes: 30,
-      description: `Find out exactly where to start. ${DEMO_NOTE}`,
+      description: "Find out exactly where to start.",
       // One question per competency, so the gap report names every one of
       // them and the learning path has enough items to show a locked one.
       questions: [
@@ -246,10 +246,10 @@ async function ensureAssessments(token, questionIds) {
     },
     {
       key: "quiz",
-      title: `${DEMO_MARK} · Fractions unit quiz`,
+      title: "Fractions Unit Quiz",
       assessment_type: "unit_quiz",
       duration_minutes: 15,
-      description: `A short check after the fractions lesson. ${DEMO_NOTE}`,
+      description: "A short check after the fractions lesson.",
       questions: [questionIds.fractions[3], questionIds.ratio[3]],
     },
   ];
@@ -520,19 +520,82 @@ async function ensureClass(token, grade, assessmentIds) {
   say(`  ${DEMO_CLASSMATES.length} classmates in ${DEMO_SECTION}${sat ? `, ${sat} sat the diagnostic` : ""}`);
 }
 
+/**
+ * Cases for the retained intervention workspace. They are teacher-authored,
+ * deterministic records: no advisory field is supplied or generated here.
+ */
+async function ensureInterventions(token, competencyIds) {
+  const { data: learners } = await callApi(env, token, "/students?page_size=100&status=all");
+  const { data: cases } = await callApi(env, token, "/interventions?page_size=100");
+  const wanted = [
+    {
+      learnerId: DEMO_LEARNER.learnerId,
+      competency: "decimals",
+      severity: "HIGH",
+      interventionType: "One-on-One Remediation",
+      status: "In Progress",
+      note: "Decimal division check-in.",
+    },
+    {
+      learnerId: DEMO_CLASSMATES[4].learnerId,
+      competency: "ratio",
+      severity: "MEDIUM",
+      interventionType: "Additional Exercise",
+      status: "In Progress",
+      note: "Ratio practice follow-up.",
+    },
+    {
+      learnerId: DEMO_CLASSMATES[5].learnerId,
+      competency: "percent",
+      severity: "LOW",
+      interventionType: "Teacher Consultation",
+      status: "Resolved",
+      note: "Percentage review completed.",
+    },
+  ];
+
+  for (const spec of wanted) {
+    const learner = (learners ?? []).find((row) => row.learner_id === spec.learnerId);
+    if (!learner) throw new Error(`Could not find the demo learner ${spec.learnerId}.`);
+
+    let existing = (cases ?? []).find((row) => row.educator_notes === spec.note);
+    if (!existing) {
+      const created = await callApi(env, token, "/interventions", {
+        method: "POST",
+        body: {
+          student_id: learner.student_id ?? learner.id,
+          competency_id: competencyIds[spec.competency],
+          severity: spec.severity,
+          intervention_type: spec.interventionType,
+          educator_notes: spec.note,
+        },
+      });
+      existing = { id: created.data.id, status: created.data.status };
+    }
+
+    if (existing.status !== spec.status) {
+      await callApi(env, token, `/interventions/${existing.id}`, {
+        method: "PATCH",
+        body: { status: spec.status },
+      });
+    }
+  }
+  say(`  ${wanted.length} intervention cases across In Progress and Resolved`);
+}
+
 async function main() {
   assertLocalTargets(env);
 
-  const teacherEmail = env.E2E_TEACHER_ADMIN_EMAIL;
-  const teacherPassword = env.E2E_TEACHER_ADMIN_PASSWORD;
+  const teacherEmail = env.E2E_TEACHER_ADMIN_EMAIL || env.LOCAL_TEACHER_ADMIN_EMAIL;
+  const teacherPassword = env.E2E_TEACHER_ADMIN_PASSWORD || env.LOCAL_TEACHER_ADMIN_PASSWORD;
   if (!teacherEmail || !teacherPassword) {
     throw new Error(
       "A Teacher/Administrator account is needed to author the demo content. Set " +
-        "E2E_TEACHER_ADMIN_EMAIL and E2E_TEACHER_ADMIN_PASSWORD for the local stack.",
+        "LOCAL_TEACHER_ADMIN_EMAIL and LOCAL_TEACHER_ADMIN_PASSWORD in .env.local.",
     );
   }
 
-  say("Seeding MathSmart demo data on the local stack…");
+  say("Seeding MathSmart Grade 6 data on the local stack…");
   const token = await signIn(env, teacherEmail, teacherPassword);
   const grade = await gradeId(env, token);
 
@@ -552,23 +615,12 @@ async function main() {
 
   await ensureEvidence(assessmentIds, activityIds, moduleIds);
   await ensureClass(token, grade, assessmentIds);
+  await ensureInterventions(token, competencyIds);
 
   say("");
-  say("Done. Sign in at http://localhost:3000/login as:");
-
-  // An address supplied through the environment is not echoed back: it came
-  // from a file whose values this script does not print, and whoever set it
-  // already knows what they set.
-  if (env.DEMO_LEARNER_EMAIL) {
-    say("  the learner named by DEMO_LEARNER_EMAIL");
-    say("  password: unchanged — the one already set for that account.");
-  } else {
-    say(`  ${DEMO_LEARNER.email}`);
-    say("  password: set from DEMO_STUDENT_PASSWORD, or the script's built-in local default.");
-  }
-
+  say("Done. Seeded DepEd Grade 6 records on the local stack.");
   say("");
-  say("Remove it all again with: npm run seed:demo:remove");
+  say("Remove seeded data with: npm run seed:demo:remove");
 }
 
 main().catch((error) => {

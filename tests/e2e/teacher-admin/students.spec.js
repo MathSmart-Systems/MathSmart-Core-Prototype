@@ -244,7 +244,7 @@ async function learnerWithNote(page) {
 describe("teacher students workspace", () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, TEACHER_ADMIN_ACCOUNT);
-    await page.waitForURL("**/teacher/dashboard");
+    await page.waitForURL("**/teacher/students");
   });
 
   // ─── The roster ──────────────────────────────────────────────────
@@ -1657,11 +1657,11 @@ describe("teacher students workspace", () => {
 
   // ─── Access, keyboard and width ──────────────────────────────────
 
-  test("a signed-out visitor cannot open a learner record", async ({ page, context }) => {
+  test("a signed-out visitor is locally bootstrapped before opening a learner record", async ({ page, context }) => {
     await context.clearCookies();
     await page.goto("/teacher/students/00000000-0000-4000-8000-000000000000");
 
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/teacher\/students\/00000000-0000-4000-8000-000000000000/);
   });
 
   test("the roster can be walked and opened from the keyboard", async ({ page }) => {

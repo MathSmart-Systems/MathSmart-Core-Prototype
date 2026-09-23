@@ -13,14 +13,12 @@ export const ROLES = Object.freeze({
 });
 
 export const ROLE_HOME = Object.freeze({
-  [ROLES.STUDENT]: "/student/dashboard",
-  [ROLES.TEACHER_ADMIN]: "/teacher/dashboard",
+  [ROLES.TEACHER_ADMIN]: "/teacher/students",
 });
 
 export const LOGIN_PATH = "/login";
 
 const WORKSPACE_PREFIX = Object.freeze({
-  [ROLES.STUDENT]: "/student",
   [ROLES.TEACHER_ADMIN]: "/teacher",
 });
 

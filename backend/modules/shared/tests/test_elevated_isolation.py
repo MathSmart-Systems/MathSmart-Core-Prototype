@@ -43,6 +43,7 @@ ALLOWED = {
     # The administrative bootstrap, which is a local command and is never
     # mounted on the API. It attaches a profile to an Auth account that already
     # exists, for the first educator, who has nobody to provision them.
+    "cli/bootstrap_local.py",
     "cli/bootstrap_profile.py",
     # The modules themselves, and their own tests.
     "modules/shared/elevated_db.py",
@@ -148,11 +149,11 @@ def test_the_shared_dependencies_offer_no_elevated_accessor():
 
 
 def test_the_allowlist_is_short_on_purpose():
-    # Seven: the three modules that own elevated access, the two operations
-    # allowed to use it, the local bootstrap command, and main.py which
-    # constructs them. Growing this number is a decision, not a detail — which
-    # is why it is written down here and has to be changed deliberately.
-    assert len(ALLOWED) == 7
+    # Eight: the three modules that own elevated access, the two operations
+    # allowed to use it, the local bootstrap command and its profile helper,
+    # and main.py which constructs them. Growing this number is a decision, not
+    # a detail — which is why it is written down here and must change deliberately.
+    assert len(ALLOWED) == 8
 
 
 def test_only_the_sensitive_dependency_reaches_the_session_gateway():

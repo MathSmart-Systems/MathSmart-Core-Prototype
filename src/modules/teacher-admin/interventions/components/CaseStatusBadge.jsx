@@ -2,15 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, AlertTriangle, Info } from "lucide-react";
 
 const SEVERITY_STYLES = {
-  HIGH: "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300",
-  MEDIUM: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  LOW: "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300",
+  HIGH: "border-destructive/40 bg-destructive/10 text-destructive dark:text-destructive",
+  MEDIUM: "border-border bg-secondary text-secondary-foreground",
+  LOW: "border-border bg-muted/40 text-muted-foreground",
 };
 
 const STATUS_STYLES = {
-  "Needs Intervention": "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300",
-  "In Progress": "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  Resolved: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  "Needs Intervention": "border-destructive/40 bg-destructive/10 text-destructive dark:text-destructive",
+  "In Progress": "border-border bg-secondary text-secondary-foreground",
+  Resolved: "border-primary/40 bg-primary/10 text-primary dark:text-primary",
 };
 
 function SeverityIcon({ value }) {

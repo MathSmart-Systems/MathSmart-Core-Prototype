@@ -37,6 +37,16 @@ function redirectTo(request, supabaseResponse, pathname, notice) {
   return redirectResponse;
 }
 
+function redirectToLocalSession(request, supabaseResponse) {
+  const url = request.nextUrl.clone();
+  url.pathname = "/api/local-session";
+  url.search = "";
+  url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  const response = NextResponse.redirect(url);
+  supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+  return response;
+}
+
 /**
  * Protected documents must not be restored from the back/forward cache after a
  * sign-out, so they are marked uncacheable.
@@ -108,16 +118,11 @@ export async function updateSession(request) {
   }
 
   if (claimsFailed) {
-    return redirectTo(request, supabaseResponse, LOGIN_PATH, AUTH_NOTICE.SERVICE);
+    return redirectToLocalSession(request, supabaseResponse);
   }
 
   if (!claims) {
-    return redirectTo(
-      request,
-      supabaseResponse,
-      LOGIN_PATH,
-      AUTH_NOTICE.SESSION_EXPIRED,
-    );
+    return redirectToLocalSession(request, supabaseResponse);
   }
 
   const role = parseTrustedRole(claims);

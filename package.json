@@ -20,6 +20,7 @@
     "db:test": "supabase test db",
     "seed:demo": "node scripts/seed-demo.mjs",
     "seed:demo:remove": "node scripts/seed-demo-remove.mjs",
+    "bootstrap:local": "node scripts/bootstrap-local.mjs",
     "env:local": "node scripts/write-local-env.mjs"
   },
   "dependencies": {

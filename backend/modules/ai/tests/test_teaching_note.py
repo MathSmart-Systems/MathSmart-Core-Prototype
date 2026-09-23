@@ -116,7 +116,7 @@ def test_evidence_that_invents_a_figure_is_dropped():
     assert note.evidence == ["3 of 5 attempts failed."]
 
 
-def test_evidence_with_no_recorded_figure_falls_back_to_the_record():
+def test_evidence_with_no_recorded_figure_falls_back_to_teacher_friendly_record_language():
     reply = json.dumps(
         {"gap": "A gap.", "evidence": ["The learner struggles a lot.", "Scored 12%."]}
     )
@@ -124,9 +124,47 @@ def test_evidence_with_no_recorded_figure_falls_back_to_the_record():
     note = parse_teaching_note(reply, EVIDENCE)
 
     assert note.evidence == [
-        "Diagnostic score 40%, current score 55%.",
+        "Initial check: 40%; current result: 55%.",
         "3 of 5 attempts were unsuccessful.",
     ]
+
+
+def test_raw_backend_field_names_never_reach_teacher_facing_evidence():
+    reply = json.dumps(
+        {
+            "gap": "The learner needs more practice with this skill.",
+            "evidence": ["diagnostic_score 40, current_score 55, attempt_count 5."],
+        }
+    )
+
+    note = parse_teaching_note(reply, EVIDENCE)
+    shown = " ".join(note.evidence)
+
+    assert note.evidence == [
+        "Initial check: 40%; current result: 55%.",
+        "3 of 5 attempts were unsuccessful.",
+    ]
+    for raw_name in ("diagnostic_score", "current_score", "attempt_count"):
+        assert raw_name not in shown
+
+
+def test_raw_backend_field_names_are_translated_in_the_rest_of_the_note():
+    reply = json.dumps(
+        {
+            "gap": "diagnostic_score 40 suggests the learner needs more practice.",
+            "actions": ["Use attempt_count 5 to plan a short review."],
+            "next_check": "Review current_score after two new items.",
+        }
+    )
+
+    note = parse_teaching_note(reply, EVIDENCE)
+    shown = " ".join([note.gap, *note.actions, note.next_check or ""])
+
+    assert "initial check" in note.gap
+    assert "recorded attempts" in note.actions[0]
+    assert "current result" in note.next_check
+    for raw_name in ("diagnostic_score", "attempt_count", "current_score"):
+        assert raw_name not in shown
 
 
 def test_markdown_tables_links_and_filler_are_removed():

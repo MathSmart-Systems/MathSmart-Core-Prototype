@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { accessToken, api } from "../support/api-fixtures.js";
-import { TEACHER_ADMIN_ACCOUNT, STUDENT_ACCOUNT, hasAccount, signIn } from "../support/accounts.js";
+import { TEACHER_ADMIN_ACCOUNT, hasAccount, signIn } from "../support/accounts.js";
 import { hostedDataSkipReason, isLocalDataEnvironment } from "../support/environment.js";
 
 /**
@@ -108,7 +108,7 @@ describe("teacher interventions, end to end", () => {
 
   test.beforeEach(async ({ page }) => {
     await signIn(page, TEACHER_ADMIN_ACCOUNT);
-    await page.waitForURL("**/teacher/dashboard");
+    await page.waitForURL("**/teacher/students");
     await page.goto("/teacher/interventions");
     await expect(
       page.getByRole("heading", { name: "Teacher Intervention Dashboard" }),
@@ -818,21 +818,5 @@ describe("teacher interventions, end to end", () => {
     await expect(trigger).toContainText("1");
     await page.getByRole("button", { name: "Clear filters" }).click();
     await expect(page).not.toHaveURL(/attempts=/);
-  });
-});
-
-describe("teacher interventions are closed to learners", () => {
-  test.skip(!hasAccount(STUDENT_ACCOUNT), "no student account is configured");
-
-  test("a learner who asks for the intervention queue does not get it", async ({ page }) => {
-    await signIn(page, STUDENT_ACCOUNT);
-    await page.waitForURL(/\/student\/dashboard/);
-
-    await page.goto("/teacher/interventions");
-
-    await expect(
-      page.getByRole("heading", { name: "Teacher Intervention Dashboard" }),
-    ).toHaveCount(0);
-    await expect(page.getByRole("row").filter({ hasText: "HIGH" })).toHaveCount(0);
   });
 });

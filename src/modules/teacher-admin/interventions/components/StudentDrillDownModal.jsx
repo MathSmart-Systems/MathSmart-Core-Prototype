@@ -179,7 +179,7 @@ export function StudentDrillDownModal({ open, student, currentCaseId = null, onC
                     <p className="mt-1.5 text-xs leading-relaxed text-foreground/90">{item.educator_notes}</p>
                   ) : null}
                   {item.reopen_reason ? (
-                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Reopened: {item.reopen_reason}
                     </p>
                   ) : null}

@@ -110,11 +110,10 @@ export function InterventionCaseTable({
           </thead>
           <tbody className="divide-y divide-border">
             {cases.map((item) => {
-              const isHigh = item.severity === "HIGH";
               return (
                 <tr
                   key={item.id}
-                  className={`transition-colors hover:bg-muted/40 ${isHigh ? "bg-rose-500/5" : ""}`}
+                  className="transition-colors hover:bg-muted/40"
                 >
                   <td className="px-2 py-3">
                     <label className="sr-only" htmlFor={`intervention-select-${item.id}`}>

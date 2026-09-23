@@ -42,28 +42,6 @@ class PatternAnalysisRequest(BaseModel):
     )
 
 
-class StudentFeedbackRequest(BaseModel):
-    """Called only after deterministic grading has already decided the score."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    competency_id: UUID | None = None
-    score: float | None = Field(default=None, ge=0, le=100)
-    mastery_band: str | None = Field(default=None, max_length=40)
-    display_context: str | None = Field(default=None, max_length=MAX_TEXT)
-
-
-class AnswerExplanationRequest(BaseModel):
-    """For a completed answer check. It cannot change the verdict it is given."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    question_text: str = Field(max_length=MAX_TEXT)
-    submitted_answer: Any = None
-    is_correct: bool | None = None
-    competency_id: UUID | None = None
-
-
 class TeacherInsightRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -75,16 +53,6 @@ class TeacherInsightRequest(BaseModel):
     incorrect_patterns: list[Any] = Field(default_factory=list, max_length=MAX_ATTEMPTS)
     completed_modules: list[Any] = Field(default_factory=list, max_length=MAX_ATTEMPTS)
     display_context: str | None = Field(default=None, max_length=MAX_TEXT)
-
-
-class RemediationRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    competency_id: UUID | None = None
-    current_score: float | None = Field(default=None, ge=0, le=100)
-    display_context: str | None = Field(default=None, max_length=MAX_TEXT)
-
-
 class Provenance(BaseModel):
     """Where advisory text came from, and when."""
 

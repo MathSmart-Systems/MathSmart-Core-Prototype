@@ -92,7 +92,7 @@ export function InterventionRecordForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-xs">
       <div>
         <h4 className="font-display text-base font-semibold text-foreground">Record teacher remediation action</h4>
         <p className="text-xs text-muted-foreground">

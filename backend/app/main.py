@@ -19,7 +19,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import Settings, get_settings
@@ -28,18 +28,91 @@ from middleware.request_context import RequestIdMiddleware
 from modules.activities.router import router as activities_router
 from modules.ai.router import router as ai_router
 from modules.assessments.router import router as assessments_router
-from modules.auth.router import router as auth_router
-from modules.competencies.router import router as competencies_router
 from modules.interventions.router import router as interventions_router
 from modules.learning_modules.router import router as learning_modules_router
 from modules.progress.router import router as progress_router
 from modules.shared.db import Database
 from modules.students.router import router as students_router
 from modules.teacher_admin.admin_router import router as teacher_admin_admin_router
-from modules.teacher_admin.reporting_router import router as teacher_admin_reporting_router
-from modules.teacher_admin.reports_router import router as teacher_admin_reports_router
 
 API_PREFIX = "/api/v1"
+
+
+def _selected_router(
+    source: APIRouter, allowed: dict[str, set[str]]
+) -> APIRouter:
+    """Return only the route/method pairs with a surviving consumer.
+
+    The existing feature routers remain the implementation owners.  Phase 5
+    narrows what the application registers without cloning handlers or
+    weakening their dependencies.  Each current route has one HTTP method;
+    refusing a mixed-method route keeps a future decorator change from
+    accidentally reopening an endpoint that is not in this contract.
+    """
+    selected = APIRouter()
+    for route in source.routes:
+        methods = set(getattr(route, "methods", None) or ()) - {"HEAD", "OPTIONS"}
+        if methods and methods <= allowed.get(route.path, set()):
+            selected.routes.append(route)
+    return selected
+
+
+STUDENT_ROUTES = {
+    "/students": {"GET", "POST"},
+    "/students/drop": {"POST"},
+    "/students/{student_id}": {"GET", "PATCH"},
+    "/students/{student_id}/restore": {"POST"},
+    "/students/{student_id}/purge-preview": {"GET"},
+    "/students/{student_id}/purge": {"POST"},
+}
+
+PROGRESS_ROUTES = {
+    "/learning-path/me": {"GET"},
+    "/progress/{student_id}": {"GET"},
+}
+
+LEARNING_MODULE_ROUTES = {
+    "/modules/{module_id}": {"GET"},
+    "/modules/{module_id}/progress": {"PATCH"},
+}
+
+ASSESSMENT_ROUTES = {
+    "/assessments": {"GET"},
+    "/assessments/{assessment_id}/attempts": {"POST"},
+    "/assessment-attempts/{attempt_id}/submit": {"POST"},
+}
+
+ACTIVITY_ROUTES = {
+    "/activities/{activity_id}": {"GET"},
+    "/activities/{activity_id}/attempts": {"POST"},
+    "/activity-attempts/{attempt_id}/submit": {"POST"},
+}
+
+AI_ROUTES = {
+    "/ai/pattern-analysis": {"POST"},
+    "/ai/teacher-insight": {"POST"},
+}
+
+
+def _teacher_admin_routes() -> dict[str, set[str]]:
+    """Authoring used by bootstrap, plus the surviving UI directories."""
+    allowed: dict[str, set[str]] = {
+        "/teacher-admin/grades": {"GET"},
+        "/teacher-admin/sections": {"GET", "POST"},
+    }
+    bootstrap_prefixes = (
+        "/teacher-admin/competencies",
+        "/teacher-admin/modules",
+        "/teacher-admin/activities",
+        "/teacher-admin/questions",
+        "/teacher-admin/assessments",
+    )
+    for route in teacher_admin_admin_router.routes:
+        if route.path.startswith(bootstrap_prefixes):
+            allowed.setdefault(route.path, set()).update(
+                set(route.methods or ()) - {"HEAD", "OPTIONS"}
+            )
+    return allowed
 
 
 def create_app(
@@ -131,18 +204,28 @@ def create_app(
         """Liveness. Deliberately says nothing about configuration or versions."""
         return {"data": {"status": "ok"}}
 
-    application.include_router(auth_router, prefix=API_PREFIX)
-    application.include_router(students_router, prefix=API_PREFIX)
-    application.include_router(competencies_router, prefix=API_PREFIX)
-    application.include_router(learning_modules_router, prefix=API_PREFIX)
-    application.include_router(assessments_router, prefix=API_PREFIX)
-    application.include_router(activities_router, prefix=API_PREFIX)
-    application.include_router(progress_router, prefix=API_PREFIX)
+    application.include_router(
+        _selected_router(students_router, STUDENT_ROUTES), prefix=API_PREFIX
+    )
+    application.include_router(
+        _selected_router(learning_modules_router, LEARNING_MODULE_ROUTES),
+        prefix=API_PREFIX,
+    )
+    application.include_router(
+        _selected_router(assessments_router, ASSESSMENT_ROUTES), prefix=API_PREFIX
+    )
+    application.include_router(
+        _selected_router(activities_router, ACTIVITY_ROUTES), prefix=API_PREFIX
+    )
+    application.include_router(
+        _selected_router(progress_router, PROGRESS_ROUTES), prefix=API_PREFIX
+    )
     application.include_router(interventions_router, prefix=API_PREFIX)
-    application.include_router(teacher_admin_reporting_router, prefix=API_PREFIX)
-    application.include_router(teacher_admin_reports_router, prefix=API_PREFIX)
-    application.include_router(teacher_admin_admin_router, prefix=API_PREFIX)
-    application.include_router(ai_router, prefix=API_PREFIX)
+    application.include_router(
+        _selected_router(teacher_admin_admin_router, _teacher_admin_routes()),
+        prefix=API_PREFIX,
+    )
+    application.include_router(_selected_router(ai_router, AI_ROUTES), prefix=API_PREFIX)
 
     return application
 
