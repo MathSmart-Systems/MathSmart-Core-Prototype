@@ -456,7 +456,7 @@ async def submit_attempt(
     """Finalise and grade an attempt.
 
     Everything in the response is the database's deterministic answer: the
-    score, the bands, the path and the next action. Nothing here consults Groq.
+    score, the bands, the path and the next action. Nothing here consults Gemini.
     """
     _only_a_learner(actor)
 

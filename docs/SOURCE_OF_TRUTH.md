@@ -6,7 +6,7 @@
 > **Type:** Web-Based Adaptive Learning Platform  
 > **Target Users:** Grade 6 Elementary Learners · Teacher/Administrators
 > **Framework:** ARAL (Assist, Remediate, Accelerate, Learn)
-> **AI Provider:** Groq; server-side API credential and model are loaded from `.env`
+> **AI Provider:** Gemini; server-side API credential and model are loaded from `.env`
 > **UI/UX Workflow Baseline:** `../../ui-ux-workflow-reference/`
 
 ---
@@ -28,7 +28,7 @@
    - [Full Stack Overview](#full-stack-overview)
    - [System Sequence Diagram](#system-sequence-diagram)
 4. [Technology Stack](#4-technology-stack)
-   - [Deterministic and Groq AI Boundary](#deterministic-and-groq-ai-boundary)
+   - [Deterministic and Gemini AI Boundary](#deterministic-and-gemini-ai-boundary)
    - [Supabase Security Baseline](#supabase-security-baseline)
 5. [User Roles & Access Control](#5-user-roles--access-control)
    - [Role Definitions](#role-definitions)
@@ -48,7 +48,7 @@
    - [Progress Dashboard](#progress-dashboard)
    - [Teacher/Administrator Dashboard and Analytics](#teacheradministrator-dashboard-and-analytics)
    - [Interventions](#interventions)
-   - [Groq AI Assistance](#groq-ai-assistance)
+   - [Gemini AI Assistance](#gemini-ai-assistance)
    - [Teacher/Administrator Administration](#teacheradministrator-administration)
    - [HTTP Status Codes](#http-status-codes)
 8. [MVP Scope & Success Criteria](#8-mvp-scope--success-criteria)
@@ -98,7 +98,7 @@ Monitoring leads to reassessment when a learner is ready to verify growth or whe
 | 3 | **ARAL-Based Learning Modules** | Provides targeted objectives, concepts, rules, visuals, worked examples, takeaways, and linked practice |
 | 4 | **Interactive Mathematics Activities** | Provides deterministic answer checking, immediate feedback, optional hints/explanations, retries, and completion summaries |
 | 5 | **Progress Monitoring Dashboard** | Tracks diagnostic baseline, current mastery, growth, modules, activities, assessment history, and recommended next action |
-| 6 | **Teacher/Administrator Intervention Dashboard** | Provides class and learner evidence, priorities, Groq-assisted insights, recorded actions, notes, and case status |
+| 6 | **Teacher/Administrator Intervention Dashboard** | Provides class and learner evidence, priorities, Gemini-assisted insights, recorded actions, notes, and case status |
 
 ---
 
@@ -136,7 +136,7 @@ The sibling `ui-ux-workflow-reference/` application is the approved functional a
 | Audience | Screens/surfaces |
 |---|---|
 | **Student** | Login/register, dashboard, assessments/history, diagnostic player, diagnostic results, My Learning, module viewer, activities, activity player, activity completion, progress, profile/preferences |
-| **Teacher/Administrator** | Dashboard, students/roster, learner drill-down, interventions, assessments, competencies, learning modules, activities, question bank, grades/sections, reports/analytics, settings, account administration, Groq feature flags, and audit views. Credentials and model selection remain server-side `.env` configuration |
+| **Teacher/Administrator** | Dashboard, students/roster, learner drill-down, interventions, assessments, competencies, learning modules, activities, question bank, grades/sections, reports/analytics, settings, account administration, Gemini feature flags, and audit views. Credentials and model selection remain server-side `.env` configuration |
 
 #### Canonical status vocabulary
 
@@ -313,7 +313,7 @@ flowchart TD
 ```
 Post-module activity unlocked → Student engages with supported question types
 → Deterministic grading returns immediate feedback and an explanation
-→ Groq feedback is advisory and has a deterministic fallback
+→ Gemini feedback is advisory and has a deterministic fallback
 → Score + time-on-task + attempts logged
 → Mastery/intervention rules checked → Continue, retry, or escalate
 ```
@@ -409,7 +409,7 @@ flowchart TD
 Teacher/Administrator logs in → Views school-wide, class-level, and individual performance
 → Filters roster/cases by class, severity, status, and competency
 → Reviews diagnostic/current scores, attempts, patterns, and modules
-→ Reviews Groq-assisted insight and suggested intervention
+→ Reviews Gemini-assisted insight and suggested intervention
 → Records intervention type + educator notes
 → Tracks case from Needs Intervention to In Progress to Resolved
 ```
@@ -475,7 +475,7 @@ flowchart TD
     O --> Q[Users, curriculum, classes, reports, settings]
     Q --> C
     Q --> F
-    R([Groq AI adapter]) -.->|Explanations and misconception summaries| H
+    R([Gemini AI adapter]) -.->|Explanations and misconception summaries| H
     R -.->|Advisory intervention suggestions| L
 ```
 
@@ -500,7 +500,7 @@ graph TD
         AP7[Teacher Intervention Service]
         AP8[Content and Class Administration]
         AP9[Reporting Service]
-        AP10[Groq AI Adapter]
+        AP10[Gemini AI Adapter]
     end
 
     subgraph Data Layer
@@ -545,7 +545,7 @@ graph TD
 └──────────────────────────────────────────┘
                   + optional server-side
 ┌──────────────────────────────────────────┐
-│  Groq AI Adapter · Model from .env       │
+│  Gemini AI Adapter · Model from .env       │
 │  Misconception summaries · Suggestions   │
 └──────────────────────────────────────────┘
 ```
@@ -561,7 +561,7 @@ sequenceDiagram
     participant FE as Next.js Frontend
     participant API as FastAPI Backend
     participant RULES as Deterministic Rules
-    participant AI as Groq AI Adapter
+    participant AI as Gemini AI Adapter
     participant AUTH as Supabase Auth
     participant DB as Supabase (PostgreSQL)
 
@@ -644,7 +644,7 @@ sequenceDiagram
 | **Database** | Supabase (PostgreSQL) | Managed PostgreSQL + built-in auth + file storage + real-time in one platform |
 | **Authentication** | Supabase Auth | Managed identities and sessions; application metadata and policies enforce `student` and `teacher_admin` roles |
 | **Deterministic Math Engine** | Python (NumPy, SymPy, scikit-learn, Pandas as justified) | Objective grading, scoring, gap rules, mastery evaluation, and analytics |
-| **Generative AI** | Groq through a server-side adapter; API credential and selected model come from `.env` | Misconception summaries, learner-friendly feedback, and advisory teacher recommendations |
+| **Generative AI** | Gemini through a server-side adapter; API credential and selected model come from `.env` | Misconception summaries, learner-friendly feedback, and advisory teacher recommendations |
 | **Frontend Hosting** | Vercel | Managed Next.js deployment with Git-based CI/CD; confirm the current plan and limits before launch |
 | **Backend Hosting** | Railway / Render | Both support Python deployments; final choice depends on operational requirements and current plans |
 | **Media Assets** | Cloudinary or Supabase Storage | Images and diagrams for modules; choose based on access control, delivery, and current pricing |
@@ -659,11 +659,11 @@ sequenceDiagram
 | **SymPy** | Symbolic math, equation solving and simplification |
 | **scikit-learn** | Scoring models, gap analysis, simple ML classification |
 | **Pandas** | Data processing for assessment results and analytics |
-| **Groq SDK behind adapter** | Bounded explanations and pedagogical suggestions without coupling deterministic domain rules to the AI client |
+| **Gemini SDK behind adapter** | Bounded explanations and pedagogical suggestions without coupling deterministic domain rules to the AI client |
 
-### Deterministic and Groq AI Boundary
+### Deterministic and Gemini AI Boundary
 
-| Deterministic application responsibility | Groq AI responsibility |
+| Deterministic application responsibility | Gemini AI responsibility |
 |---|---|
 | Correct/incorrect evaluation | Rephrase feedback in supportive learner-appropriate language |
 | Raw and percentage scores | Explain likely misconceptions using submitted evidence |
@@ -673,7 +673,7 @@ sequenceDiagram
 | Intervention trigger and severity rules | Draft an advisory teacher insight |
 | Authorization and role decisions | No role or authorization decision |
 
-Groq output is advisory, labeled, and non-authoritative. It must be invoked server-side, receive the minimum required learner context, exclude secrets and unnecessary personally identifiable information, use timeouts/rate limits, and fall back gracefully to deterministic content. Groq failure must not prevent grading, progress updates, or intervention recording. The API credential and model selection are deployment-only values loaded from the working application's existing `.env`; they are not stored in `SYSTEM_SETTING`, accepted from API requests, or editable in Student or Teacher/Administrator UI.
+Gemini output is advisory, labeled, and non-authoritative. It must be invoked server-side, receive the minimum required learner context, exclude secrets and unnecessary personally identifiable information, use timeouts/rate limits, and fall back gracefully to deterministic content. Gemini failure must not prevent grading, progress updates, or intervention recording. The API credential and model selection are deployment-only values loaded from the working application's existing `.env`; they are not stored in `SYSTEM_SETTING`, accepted from API requests, or editable in Student or Teacher/Administrator UI.
 
 ### Supabase Security Baseline
 
@@ -694,7 +694,7 @@ Groq output is advisory, labeled, and non-authoritative. It must be invoked serv
 | Role | Access Level | Key Capabilities |
 |------|-------------|------------------|
 | 🎓 **Student** | Own learner workspace | Authenticate, manage permitted profile fields, take assessments, follow targeted modules, complete activities, and view own progress/history |
-| 👩‍🏫 **Teacher/Administrator** (`teacher_admin`) | School-wide teaching and administration workspace | View learner evidence and analytics, manage students/interventions, administer users and Grade 6 curriculum content, maintain grades/sections, export reports, and configure thresholds/integrations/Groq feature flags; deployment controls credentials/model through `.env` |
+| 👩‍🏫 **Teacher/Administrator** (`teacher_admin`) | School-wide teaching and administration workspace | View learner evidence and analytics, manage students/interventions, administer users and Grade 6 curriculum content, maintain grades/sections, export reports, and configure thresholds/integrations/Gemini feature flags; deployment controls credentials/model through `.env` |
 
 Production has exactly two authorization claims: `student` and `teacher_admin`. The reference prototype's `TEACHER_ADMIN` concept maps to the canonical lowercase `teacher_admin` claim. FastAPI authorization and Supabase policies enforce the distinction between learners and Teacher/Administrators.
 
@@ -716,8 +716,8 @@ Production has exactly two authorization claims: `student` and `teacher_admin`. 
 | Create/update/archive interventions | ❌ | ✅ school-wide |
 | Export learner/cohort reports | ❌ | ✅ school-wide |
 | Manage users, curriculum, assessments, grades, and sections | ❌ | ✅ |
-| Change global thresholds, Groq feature flags, and integrations | ❌ | ✅ |
-| Request bounded Groq assistance | ✅ post-answer feedback | ✅ school-wide learner evidence |
+| Change global thresholds, Gemini feature flags, and integrations | ❌ | ✅ |
+| Request bounded Gemini assistance | ✅ post-answer feedback | ✅ school-wide learner evidence |
 
 ---
 
@@ -993,8 +993,8 @@ erDiagram
 | **ACTIVITY / ACTIVITY_QUESTION** | Practice definition and ordered membership of reusable questions. A module may have one or more activities. |
 | **ACTIVITY_ATTEMPT** | Attempt number, timing, deterministic score/pass result, and resulting mastery state. |
 | **COMPETENCY_PROGRESS** | Current learner score, diagnostic baseline, band, attempts, and last-study data for dashboards and rules. |
-| **INTERVENTION** | Auditable case with learner, target competency, severity, lifecycle status, evidence, optional Groq advice, authorized educator action, and timestamps. |
-| **SYSTEM_SETTING** | Teacher/Administrator-controlled, auditable configuration such as pass thresholds, intervention triggers, notifications, and Groq feature flags. |
+| **INTERVENTION** | Auditable case with learner, target competency, severity, lifecycle status, evidence, optional Gemini advice, authorized educator action, and timestamps. |
+| **SYSTEM_SETTING** | Teacher/Administrator-controlled, auditable configuration such as pass thresholds, intervention triggers, notifications, and Gemini feature flags. |
 
 ---
 
@@ -1107,7 +1107,7 @@ Collection endpoints use pagination and explicit filters. Student-scoped endpoin
 | `POST` | `/activity-attempts/{attempt_id}/answer-checks` | ✅ | Student own | Return immediate deterministic feedback for one answer |
 | `POST` | `/activity-attempts/{attempt_id}/submit` | ✅ | Student own | Finalize an attempt for deterministic scoring and optional explanatory feedback |
 | `GET` | `/students/{student_id}/activity-attempts` | ✅ | Student own · Teacher/Administrator | Get activity history within permitted scope |
-| `POST` | `/activity-attempts/{attempt_id}/hints` | ✅ | Student own | Return an authored hint with optional Groq-enhanced wording |
+| `POST` | `/activity-attempts/{attempt_id}/hints` | ✅ | Student own | Return an authored hint with optional Gemini-enhanced wording |
 
 ---
 
@@ -1142,7 +1142,7 @@ Collection endpoints use pagination and explicit filters. Student-scoped endpoin
 | `GET` | `/progress/me` | ✅ | Student | Get full progress summary |
 | `GET` | `/progress/{student_id}` | ✅ | Teacher/Administrator | Get a student's full progress |
 
-### Groq AI Assistance
+### Gemini AI Assistance
 
 | Method | Endpoint | Auth | Role | Purpose |
 |--------|----------|------|------|---------|
@@ -1152,7 +1152,7 @@ Collection endpoints use pagination and explicit filters. Student-scoped endpoin
 | `POST` | `/ai/teacher-insight` | ✅ | Teacher/Administrator | Draft an advisory learner insight and possible actions |
 | `POST` | `/ai/remediation-support` | ✅ | Teacher/Administrator · service | Suggest scaffolding for a competency gap |
 
-All `/ai/*` endpoints call Groq through the server-side adapter and are feature-flagged, rate-limited, redacted, and non-authoritative. The adapter loads its API credential and model from `.env`; request payloads cannot override them. Endpoints must return a safe fallback or `503` without blocking the deterministic transaction.
+All `/ai/*` endpoints call Gemini through the server-side adapter and are feature-flagged, rate-limited, redacted, and non-authoritative. The adapter loads its API credential and model from `.env`; request payloads cannot override them. Endpoints must return a safe fallback or `503` without blocking the deterministic transaction.
 
 ---
 
@@ -1180,7 +1180,7 @@ All `/ai/*` endpoints call Groq through the server-side adapter and are feature-
 | `GET`, `PATCH`, `DELETE` | `/teacher-admin/grades/{grade_id}` | ✅ | Teacher/Administrator | Read, update, or archive a grade level |
 | `GET`, `POST` | `/teacher-admin/sections` | ✅ | Teacher/Administrator | List or create sections |
 | `GET`, `PATCH`, `DELETE` | `/teacher-admin/sections/{section_id}` | ✅ | Teacher/Administrator | Read, update, archive, or assign an adviser |
-| `GET` | `/teacher-admin/settings` | ✅ | Teacher/Administrator | Read thresholds, notifications, integrations, Groq feature flags, and a sanitized read-only model identifier; never return credentials or editable model configuration |
+| `GET` | `/teacher-admin/settings` | ✅ | Teacher/Administrator | Read thresholds, notifications, integrations, Gemini feature flags, and a sanitized read-only model identifier; never return credentials or editable model configuration |
 | `PATCH` | `/teacher-admin/settings` | ✅ | Teacher/Administrator | Update validated global configuration |
 | `GET` | `/teacher-admin/audit-events` | ✅ | Teacher/Administrator | Search authorized audit history |
 | `POST` | `/teacher-admin/students/{student_id}/diagnostic-reset` | ✅ | Teacher/Administrator | Authorize a new diagnostic attempt and audit the reason |
@@ -1203,7 +1203,7 @@ All `/ai/*` endpoints call Groq through the server-side adapter and are feature-
 | `422 Unprocessable` | Schema mismatch | Wrong data types in request |
 | `429 Too Many Requests` | Rate limited | Too many rapid submissions |
 | `500 Internal Server Error` | Server failure | Unexpected backend error |
-| `503 Service Unavailable` | Groq or another dependency unavailable | Deterministic operations remain usable when Groq assistance is unavailable |
+| `503 Service Unavailable` | Gemini or another dependency unavailable | Deterministic operations remain usable when Gemini assistance is unavailable |
 
 ---
 
@@ -1251,7 +1251,7 @@ All `/ai/*` endpoints call Groq through the server-side adapter and are feature-
 - [ ] A Teacher/Administrator can record an intervention type and notes, then advance the case status
 - [ ] A Teacher/Administrator can publish the minimum content needed for the diagnostic-to-activity journey
 - [ ] Assessment results are stored and reflected in both Student and Teacher/Administrator dashboards
-- [ ] Scores, mastery, unlocks, and interventions remain correct when Groq is disabled by feature policy or temporarily unavailable
+- [ ] Scores, mastery, unlocks, and interventions remain correct when Gemini is disabled by feature policy or temporarily unavailable
 - [ ] Core flows work on desktop and mobile and are keyboard operable with explicit non-color status labels
 
 ---
@@ -1317,7 +1317,7 @@ This is the approved module-first architecture. Its route, frontend-module, back
 ```
 MathSmart/
 ├── .env.example                  # Environment variable names only; no secrets
-├── .env                          # Server-only secrets + Groq model; never print or commit
+├── .env                          # Server-only secrets + Gemini model; never print or commit
 ├── eslint.config.mjs             # ESLint configuration
 ├── next.config.mjs               # Next.js configuration
 ├── package.json                  # Dependencies & scripts
@@ -1418,7 +1418,7 @@ MathSmart/
 │   │   ├── teacher_admin/
 │   │   ├── reports/
 │   │   ├── settings/
-│   │   └── shared/               # Database/Groq helpers without domain policy
+│   │   └── shared/               # Database/Gemini helpers without domain policy
 │   └── middleware/               # JWT, request ID, and error middleware
 │
 └── tests/                        # Cross-module integration and end-to-end tests

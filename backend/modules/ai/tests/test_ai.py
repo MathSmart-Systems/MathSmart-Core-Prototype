@@ -1,4 +1,4 @@
-"""Groq assistance routes.
+"""Gemini assistance routes.
 
 Everything here is advisory. These endpoints exist so a workflow can ask for
 phrasing it may then choose to show; nothing they return decides correctness, a
@@ -6,7 +6,7 @@ score, a band, an unlock, an intervention, a role or a permission — the routes
 that decide those never call them.
 
 The rules worth testing are therefore: the credential and the model never appear
-in a request or a response, an unavailable Groq is a clean 503 rather than a
+in a request or a response, an unavailable Gemini is a clean 503 rather than a
 failure of the learning endpoints, and identifying evidence never leaves the
 process.
 """
@@ -15,7 +15,7 @@ from uuid import UUID
 
 import pytest
 
-from modules.shared.groq_adapter import AdvisoryResult
+from modules.shared.gemini_adapter import AdvisoryResult
 from modules.shared.testing import (
     ADVISER_HEADERS,
     LEARNER_HEADERS,
@@ -30,7 +30,7 @@ COMPETENCY = UUID("13ec5f06-746e-45fb-a58a-92f4ce42621c")
 STUDENT_ID = UUID("58000000-0000-4000-8000-000000000001")
 
 
-class FakeGroq:
+class FakeGemini:
     """Answers, or refuses, exactly as the test says."""
 
     def __init__(self, *, text: str | None = "Advisory text.", enabled: bool = True):
@@ -50,7 +50,7 @@ class FakeGroq:
             return None
         return AdvisoryResult(
             text=self.text,
-            provider="groq",
+            provider="gemini",
             model="a-configured-model",
             generated_at=datetime.now(UTC),
             confidence=0.62,
@@ -58,11 +58,11 @@ class FakeGroq:
 
 
 def ai_client(
-    groq: FakeGroq | None = None,
+    ai: FakeGemini | None = None,
     *,
     live_session: bool = True,
-    groq_advisory_enabled: bool = True,
-    server_groq_enabled: bool = True,
+    gemini_advisory_enabled: bool = True,
+    server_gemini_enabled: bool = True,
 ):
     from fastapi.testclient import TestClient
     from pydantic import SecretStr
@@ -70,20 +70,20 @@ def ai_client(
     from app.main import create_app
 
     settings = fake_settings()
-    settings.groq_enabled = server_groq_enabled
-    if server_groq_enabled:
-        settings.groq_model = "a-configured-model"
-        settings.groq_api_key = SecretStr("gsk_test")
+    settings.gemini_enabled = server_gemini_enabled
+    if server_gemini_enabled:
+        settings.gemini_model = "a-configured-model"
+        settings.gemini_api_key = SecretStr("gsk_test")
 
     results = {
-        "app.groq_advisory_enabled()": groq_advisory_enabled,
+        "app.gemini_advisory_enabled()": gemini_advisory_enabled,
     }
     application = create_app(
         settings=settings,
         token_verifier=FakeVerifier(),
         database=FakeDatabase(FakeConnection(results=results)),
         session_gateway=FakeSessionGateway(live=live_session),
-        groq=groq if groq is not None else FakeGroq(enabled=server_groq_enabled),
+        ai=ai if ai is not None else FakeGemini(enabled=server_gemini_enabled),
     )
     return TestClient(application, raise_server_exceptions=False)
 
@@ -111,55 +111,55 @@ def test_pattern_analysis_returns_advice_with_its_provenance():
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["misconception_summary"] == "Advisory text."
-    assert data["provider"] == "groq"
+    assert data["provider"] == "gemini"
     assert data["model"] == "a-configured-model"
     assert data["generated_at"]
 
 
-def test_an_unavailable_groq_is_a_clean_503():
+def test_an_unavailable_gemini_is_a_clean_503():
     """The learning endpoints still work; a direct AI request says so plainly."""
-    client = ai_client(FakeGroq(text=None))
+    client = ai_client(FakeGemini(text=None))
 
     response = client.post(
         "/api/v1/ai/pattern-analysis", json=PATTERN_BODY, headers=ADVISER_HEADERS
     )
 
     assert response.status_code == 503
-    assert response.json()["error"]["code"] == "groq_assistance_unavailable"
+    assert response.json()["error"]["code"] == "gemini_assistance_unavailable"
 
 
-def test_a_disabled_groq_is_the_same_503():
-    client = ai_client(FakeGroq(text=None, enabled=False), server_groq_enabled=False)
-
-    response = client.post(
-        "/api/v1/ai/pattern-analysis", json=PATTERN_BODY, headers=ADVISER_HEADERS
-    )
-
-    assert response.status_code == 503
-
-
-def test_groq_gated_by_database_stored_setting():
-    """Fails with 503 if DB setting is false even when server GROQ_ENABLED is true."""
-    client = ai_client(groq_advisory_enabled=False, server_groq_enabled=True)
+def test_a_disabled_gemini_is_the_same_503():
+    client = ai_client(FakeGemini(text=None, enabled=False), server_gemini_enabled=False)
 
     response = client.post(
         "/api/v1/ai/pattern-analysis", json=PATTERN_BODY, headers=ADVISER_HEADERS
     )
 
     assert response.status_code == 503
-    assert response.json()["error"]["code"] == "groq_assistance_unavailable"
 
 
-def test_groq_gated_by_server_environment():
-    """Fails with 503 if server GROQ_ENABLED is false even when DB setting is true."""
-    client = ai_client(groq_advisory_enabled=True, server_groq_enabled=False)
+def test_gemini_gated_by_database_stored_setting():
+    """Fails with 503 if DB setting is false even when server GEMINI_ENABLED is true."""
+    client = ai_client(gemini_advisory_enabled=False, server_gemini_enabled=True)
 
     response = client.post(
         "/api/v1/ai/pattern-analysis", json=PATTERN_BODY, headers=ADVISER_HEADERS
     )
 
     assert response.status_code == 503
-    assert response.json()["error"]["code"] == "groq_assistance_unavailable"
+    assert response.json()["error"]["code"] == "gemini_assistance_unavailable"
+
+
+def test_gemini_gated_by_server_environment():
+    """Fails with 503 if server GEMINI_ENABLED is false even when DB setting is true."""
+    client = ai_client(gemini_advisory_enabled=True, server_gemini_enabled=False)
+
+    response = client.post(
+        "/api/v1/ai/pattern-analysis", json=PATTERN_BODY, headers=ADVISER_HEADERS
+    )
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "gemini_assistance_unavailable"
 
 
 def test_a_request_cannot_choose_the_model():
@@ -190,8 +190,8 @@ def test_a_request_cannot_supply_a_credential():
 
 def test_identifying_evidence_never_reaches_the_prompt():
     """Redaction is by key, so a learner's name cannot be passed through."""
-    groq = FakeGroq()
-    client = ai_client(groq)
+    ai = FakeGemini()
+    client = ai_client(ai)
 
     client.post(
         "/api/v1/ai/pattern-analysis",
@@ -199,7 +199,7 @@ def test_identifying_evidence_never_reaches_the_prompt():
         headers=ADVISER_HEADERS,
     )
 
-    sent = str(groq.calls[0]["evidence"])
+    sent = str(ai.calls[0]["evidence"])
     assert "full_name" not in sent
     assert "email" not in sent
 
@@ -245,8 +245,8 @@ def _gate_request(database, *, server_enabled=True):
     from types import SimpleNamespace
 
     state = SimpleNamespace(
-        settings=SimpleNamespace(groq_enabled=server_enabled),
-        groq=FakeGroq(enabled=server_enabled),
+        settings=SimpleNamespace(gemini_enabled=server_enabled),
+        ai=FakeGemini(enabled=server_enabled),
         database=database,
     )
     return SimpleNamespace(app=SimpleNamespace(state=state))
@@ -258,7 +258,7 @@ def test_the_classroom_setting_is_read_as_the_caller_through_the_gateway():
     from modules.ai.service import is_advisory_enabled
     from modules.shared.testing import FakeConnection, FakeDatabase
 
-    database = FakeDatabase(FakeConnection(results={"app.groq_advisory_enabled()": True}))
+    database = FakeDatabase(FakeConnection(results={"app.gemini_advisory_enabled()": True}))
     actor = object()
 
     assert asyncio.run(is_advisory_enabled(_gate_request(database), actor)) is True
@@ -273,7 +273,7 @@ def test_no_caller_or_a_failed_read_is_off():
     from modules.ai.service import is_advisory_enabled
     from modules.shared.testing import FakeConnection, FakeDatabase
 
-    database = FakeDatabase(FakeConnection(results={"app.groq_advisory_enabled()": True}))
+    database = FakeDatabase(FakeConnection(results={"app.gemini_advisory_enabled()": True}))
     assert asyncio.run(is_advisory_enabled(_gate_request(database), None)) is False
 
     class Broken:

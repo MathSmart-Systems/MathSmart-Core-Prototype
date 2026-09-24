@@ -42,9 +42,9 @@ select has_column('app'::name, 'system_settings'::name, 'updated_at'::name,    '
 select col_is_pk('app'::name, 'interventions'::name,   'intervention_id'::name, 'app.interventions is keyed by intervention_id');
 select col_is_pk('app'::name, 'system_settings'::name, 'setting_key'::name,     'app.system_settings is keyed by setting_key');
 
--- The advisory fields must be optional, or a case could not exist without Groq.
+-- The advisory fields must be optional, or a case could not exist without Gemini.
 select col_is_null('app'::name, 'interventions'::name, 'ai_insight'::name,
-                   'app.interventions.ai_insight is optional, so a case survives Groq being unavailable');
+                   'app.interventions.ai_insight is optional, so a case survives Gemini being unavailable');
 select col_is_null('app'::name, 'interventions'::name, 'ai_recommendation'::name,
                    'app.interventions.ai_recommendation is optional');
 

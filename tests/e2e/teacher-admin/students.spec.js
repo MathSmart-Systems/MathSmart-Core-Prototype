@@ -12,7 +12,7 @@ import { TEACHER_ADMIN_ACCOUNT, hasAccount, signIn } from "../support/accounts";
  * refresh, the enrolment POST, the edit PATCH and the advisory request — are
  * stubbed. That split is deliberate: it keeps the tests honest about what they
  * proved, and it means nothing here enrols a learner into real school data or
- * makes a live Groq request.
+ * makes a live Gemini request.
  *
  * Three things these are mostly about: a learner's name opens their record, a
  * truncated roster reports the API's own total rather than the size of the
@@ -110,7 +110,7 @@ async function stubClientCalls(
         if (reply === null) {
           return jsonReply(route, 503, {
             error: {
-              code: "groq_assistance_unavailable",
+              code: "gemini_assistance_unavailable",
               message: "AI assistance is not available",
             },
           });
@@ -1556,7 +1556,7 @@ describe("teacher students workspace", () => {
     await page.waitForTimeout(1500);
 
     // Nothing to ask about is not a failure: the panel stays away and no
-    // request is made, rather than asking Groq to comment on an empty record.
+    // request is made, rather than asking Gemini to comment on an empty record.
     await expect(page.getByRole("region", { name: "Teaching note", exact: true })).toHaveCount(0);
     expect(store.insights).toHaveLength(0);
   });
@@ -1601,7 +1601,7 @@ describe("teacher students workspace", () => {
 
       // No provenance, and nothing that reads as raw markup.
       const text = await panel.innerText();
-      for (const marker of ["Written by", "groq", "gpt", "**", "##", "|"]) {
+      for (const marker of ["Written by", "gemini", "gpt", "**", "##", "|"]) {
         expect(text, `"${marker}" reached the teacher`).not.toContain(marker);
       }
       expect(text).not.toMatch(/\b(AM|PM)\b|\d{1,2}:\d{2}/);

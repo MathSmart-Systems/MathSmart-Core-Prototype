@@ -20,7 +20,7 @@ import { formatDate, formatScore, sortCases } from "../utils/intervention-helper
  * A learner's full intervention history across competencies.
  *
  * Completely deterministic: it is the same queue endpoint filtered to one
- * student. No Groq output is consulted here.
+ * student. No Gemini output is consulted here.
  *
  * @param {object} props
  * @param {boolean} props.open

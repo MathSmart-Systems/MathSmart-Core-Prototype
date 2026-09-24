@@ -3,7 +3,7 @@
 The rules being checked here are the boundary ones. A suggestion is only ever
 produced when a teacher asks for it; the evidence that leaves the process is
 assembled from the case's own record and carries no learner identity; the text
-is written by the server and never accepted from a request; and every way Groq
+is written by the server and never accepted from a request; and every way Gemini
 can fail — switched off at the server, switched off in the database, silent,
 slow, or answering in a shape we did not expect — leaves the case untouched and
 the deterministic workflow usable.
@@ -42,7 +42,7 @@ PLAN = (
 PURPOSE = "intervention support plan"
 
 
-class SelectiveGroq:
+class SelectiveGemini:
     """Answers some purposes and refuses others, so a partial reply is testable."""
 
     def __init__(self, *, answers: dict | None = None, enabled: bool = True):
@@ -57,7 +57,7 @@ class SelectiveGroq:
     async def advise(self, *, purpose: str, evidence: dict, **shape):
         from datetime import UTC, datetime
 
-        from modules.shared.groq_adapter import AdvisoryResult
+        from modules.shared.gemini_adapter import AdvisoryResult
 
         self.calls.append({"purpose": purpose, "evidence": evidence, **shape})
         text = self.answers.get(purpose, PLAN)
@@ -65,7 +65,7 @@ class SelectiveGroq:
             return None
         return AdvisoryResult(
             text=text,
-            provider="groq",
+            provider="gemini",
             model="a-configured-model",
             generated_at=datetime.now(UTC),
             confidence=None,
@@ -74,13 +74,13 @@ class SelectiveGroq:
 
 def advisory_client(
     connection,
-    groq: SelectiveGroq | None = None,
+    ai: SelectiveGemini | None = None,
     *,
     live_session: bool = True,
-    server_groq_enabled: bool = True,
+    server_gemini_enabled: bool = True,
     advisory_flag: bool = True,
 ):
-    """The real application, with Groq and the advisory flag under the test's control."""
+    """The real application, with Gemini and the advisory flag under the test's control."""
     from fastapi.testclient import TestClient
     from pydantic import SecretStr
 
@@ -93,19 +93,19 @@ def advisory_client(
     )
 
     settings = fake_settings()
-    settings.groq_enabled = server_groq_enabled
-    if server_groq_enabled:
-        settings.groq_model = "a-configured-model"
-        settings.groq_api_key = SecretStr("gsk_test")
+    settings.gemini_enabled = server_gemini_enabled
+    if server_gemini_enabled:
+        settings.gemini_model = "a-configured-model"
+        settings.gemini_api_key = SecretStr("gsk_test")
 
-    connection.results.setdefault("app.groq_advisory_enabled()", advisory_flag)
+    connection.results.setdefault("app.gemini_advisory_enabled()", advisory_flag)
 
     application = create_app(
         settings=settings,
         token_verifier=FakeVerifier(),
         database=FakeDatabase(connection),
         session_gateway=FakeSessionGateway(live=live_session),
-        groq=groq if groq is not None else SelectiveGroq(enabled=server_groq_enabled),
+        ai=ai if ai is not None else SelectiveGemini(enabled=server_gemini_enabled),
     )
     return TestClient(application, raise_server_exceptions=False)
 
@@ -133,8 +133,8 @@ def plan_written(connection):
 
 def test_a_teacher_admin_asks_for_a_suggestion_and_it_is_kept():
     connection = advisory_connection()
-    groq = SelectiveGroq()
-    client = advisory_client(connection, groq)
+    ai = SelectiveGemini()
+    client = advisory_client(connection, ai)
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
@@ -148,7 +148,7 @@ def test_a_teacher_admin_asks_for_a_suggestion_and_it_is_kept():
     # One plan, not a teaching note and a remediation idea saying the same
     # thing twice: the second text column is deliberately left empty.
     assert args[2] is None
-    assert args[3] == "groq"
+    assert args[3] == "gemini"
 
     plan = plan_written(connection)
     assert plan["gap"] == GAP
@@ -159,12 +159,12 @@ def test_a_teacher_admin_asks_for_a_suggestion_and_it_is_kept():
 
 def test_the_request_asks_for_the_shape_it_can_render():
     connection = advisory_connection()
-    groq = SelectiveGroq()
-    client = advisory_client(connection, groq)
+    ai = SelectiveGemini()
+    client = advisory_client(connection, ai)
 
     client.post(ADVICE, headers=ADVISER_HEADERS)
 
-    call = groq.calls[0]
+    call = ai.calls[0]
     assert call["purpose"] == PURPOSE
     # A prompt is a request rather than a guarantee, but asking is still the
     # first half of getting a short answer instead of an essay.
@@ -175,13 +175,13 @@ def test_the_request_asks_for_the_shape_it_can_render():
 
 def test_a_suggestion_never_carries_the_learners_identity():
     connection = advisory_connection()
-    groq = SelectiveGroq()
-    client = advisory_client(connection, groq)
+    ai = SelectiveGemini()
+    client = advisory_client(connection, ai)
 
     client.post(ADVICE, headers=ADVISER_HEADERS)
 
-    assert groq.calls
-    sent = repr(groq.calls)
+    assert ai.calls
+    sent = repr(ai.calls)
     # The evidence is assembled from the case's own deterministic record. Who
     # the learner is has no bearing on what would help them, so it is not sent.
     assert ROW["full_name"] not in sent
@@ -190,8 +190,8 @@ def test_a_suggestion_never_carries_the_learners_identity():
 
 def test_reading_a_case_never_generates_a_suggestion():
     connection = advisory_connection()
-    groq = SelectiveGroq()
-    client = advisory_client(connection, groq)
+    ai = SelectiveGemini()
+    client = advisory_client(connection, ai)
 
     client.get("/api/v1/interventions", headers=ADVISER_HEADERS)
     client.get(
@@ -199,13 +199,13 @@ def test_reading_a_case_never_generates_a_suggestion():
         headers=ADVISER_HEADERS,
     )
 
-    assert groq.calls == []
+    assert ai.calls == []
 
 
 def test_a_reply_wrapped_in_a_code_fence_is_still_a_plan():
     connection = advisory_connection()
     fenced = "Here you go:\n```json\n" + PLAN + "\n```"
-    client = advisory_client(connection, SelectiveGroq(answers={PURPOSE: fenced}))
+    client = advisory_client(connection, SelectiveGemini(answers={PURPOSE: fenced}))
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
@@ -216,7 +216,7 @@ def test_a_reply_wrapped_in_a_code_fence_is_still_a_plan():
 def test_json_followed_by_a_friendly_sentence_is_still_a_plan():
     connection = advisory_connection()
     chatty = f"{PLAN}\n\nLet me know if you would like more detail!"
-    client = advisory_client(connection, SelectiveGroq(answers={PURPOSE: chatty}))
+    client = advisory_client(connection, SelectiveGemini(answers={PURPOSE: chatty}))
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
@@ -235,7 +235,7 @@ def test_markdown_never_reaches_the_teacher():
         '"strategies": ["### Step one\\n- use a number line", "| a | b |"], '
         '"scaffold": "`place value chart`", "next_check": "Ask again."}'
     )
-    client = advisory_client(connection, SelectiveGroq(answers={PURPOSE: messy}))
+    client = advisory_client(connection, SelectiveGemini(answers={PURPOSE: messy}))
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
@@ -249,7 +249,7 @@ def test_markdown_never_reaches_the_teacher():
 def test_an_essay_is_cut_down_rather_than_stored_whole():
     connection = advisory_connection()
     essay = " ".join(f"Sentence number {index} about decimals." for index in range(60))
-    client = advisory_client(connection, SelectiveGroq(answers={PURPOSE: essay}))
+    client = advisory_client(connection, SelectiveGemini(answers={PURPOSE: essay}))
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
@@ -273,7 +273,7 @@ def test_prose_that_is_not_json_still_becomes_a_usable_plan():
         "Try a number line first. "
         "Then ask her to estimate before writing anything down."
     )
-    client = advisory_client(connection, SelectiveGroq(answers={PURPOSE: prose}))
+    client = advisory_client(connection, SelectiveGemini(answers={PURPOSE: prose}))
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
@@ -283,14 +283,14 @@ def test_prose_that_is_not_json_still_becomes_a_usable_plan():
     assert len(plan["strategies"]) == 2
 
 
-def test_groq_being_off_at_the_server_leaves_the_case_as_it_was():
+def test_gemini_being_off_at_the_server_leaves_the_case_as_it_was():
     connection = advisory_connection()
-    client = advisory_client(connection, server_groq_enabled=False)
+    client = advisory_client(connection, server_gemini_enabled=False)
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
     assert response.status_code == 503
-    assert response.json()["error"]["code"] == "groq_assistance_unavailable"
+    assert response.json()["error"]["code"] == "gemini_assistance_unavailable"
     assert attach_calls(connection) == []
 
 
@@ -306,18 +306,18 @@ def test_the_advisory_flag_being_off_refuses_without_writing():
 
 def test_a_silent_reply_writes_nothing():
     connection = advisory_connection()
-    client = advisory_client(connection, SelectiveGroq(answers={PURPOSE: None}))
+    client = advisory_client(connection, SelectiveGemini(answers={PURPOSE: None}))
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
     assert response.status_code == 503
-    assert response.json()["error"]["code"] == "groq_assistance_unavailable"
+    assert response.json()["error"]["code"] == "gemini_assistance_unavailable"
     assert attach_calls(connection) == []
 
 
 def test_a_reply_with_no_words_in_it_writes_nothing():
     connection = advisory_connection()
-    client = advisory_client(connection, SelectiveGroq(answers={PURPOSE: "**  ##  **"}))
+    client = advisory_client(connection, SelectiveGemini(answers={PURPOSE: "**  ##  **"}))
 
     response = client.post(ADVICE, headers=ADVISER_HEADERS)
 
@@ -327,13 +327,13 @@ def test_a_reply_with_no_words_in_it_writes_nothing():
 
 def test_a_learner_cannot_ask_for_a_suggestion():
     connection = advisory_connection()
-    groq = SelectiveGroq()
-    client = advisory_client(connection, groq)
+    ai = SelectiveGemini()
+    client = advisory_client(connection, ai)
 
     response = client.post(ADVICE, headers=LEARNER_HEADERS)
 
     assert response.status_code == 403
-    assert groq.calls == []
+    assert ai.calls == []
     assert attach_calls(connection) == []
 
 

@@ -30,13 +30,13 @@ class Settings(BaseSettings):
     supabase_jwt_issuer: str
     supabase_jwt_audience: str = "authenticated"
 
-    # Groq is advisory. Grading, mastery, progression and intervention triggers
+    # Gemini is advisory. Grading, mastery, progression and intervention triggers
     # are deterministic and must work with this disabled, so the credential and
     # the model are optional until it is switched on.
-    groq_enabled: bool = False
-    groq_api_key: SecretStr | None = None
-    groq_model: str | None = None
-    groq_timeout_seconds: float = 8.0
+    gemini_enabled: bool = False
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str | None = None
+    gemini_timeout_seconds: float = 8.0
 
     # CORS allowed origins. Deliberately explicit: credentials and authorization
     # headers must not be accepted from arbitrary origins.
@@ -75,13 +75,13 @@ class Settings(BaseSettings):
         return origins
 
     @model_validator(mode="after")
-    def _groq_is_completely_configured_or_off(self) -> Settings:
-        if not self.groq_enabled:
+    def _gemini_is_completely_configured_or_off(self) -> Settings:
+        if not self.gemini_enabled:
             return self
-        if self.groq_api_key is None:
-            raise ValueError("GROQ_ENABLED is true but GROQ_API_KEY is not set")
-        if not self.groq_model:
-            raise ValueError("GROQ_ENABLED is true but GROQ_MODEL is not set")
+        if self.gemini_api_key is None:
+            raise ValueError("GEMINI_ENABLED is true but GEMINI_API_KEY is not set")
+        if not self.gemini_model:
+            raise ValueError("GEMINI_ENABLED is true but GEMINI_MODEL is not set")
         return self
 
 

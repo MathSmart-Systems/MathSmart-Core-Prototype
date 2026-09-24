@@ -332,7 +332,7 @@ select throws_ok(
 
 select throws_ok(
   $$ insert into app.system_settings (setting_key, setting_value, updated_by)
-     values ('features.groq_api_key', '"redacted"'::jsonb, 'a6000000-0000-4000-8000-0000000000a1') $$,
+     values ('features.gemini_api_key', '"redacted"'::jsonb, 'a6000000-0000-4000-8000-0000000000a1') $$,
   '23514', null::text,
   'Even a teacher_admin cannot store a credential in system settings');
 

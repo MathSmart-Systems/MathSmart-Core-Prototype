@@ -1732,19 +1732,19 @@ async def read_settings(
     """The effective configuration.
 
     What is absent is the point: there is no credential here and no editable
-    model. The Groq API key and the selected model are `.env` values that the
+    model. The Gemini API key and the selected model are `.env` values that the
     database has no column for and this response has no field for.
     """
     stored = await _stored_settings(connection)
     effective = {**SETTING_DEFAULTS, **stored}
 
     app_settings = getattr(request.app.state, "settings", None)
-    server_configured = bool(getattr(app_settings, "groq_enabled", False))
-    groq_model = getattr(app_settings, "groq_model", None)
+    server_configured = bool(getattr(app_settings, "gemini_enabled", False))
+    gemini_model = getattr(app_settings, "gemini_model", None)
     # The model is shown only while the server actually uses one; a name left
-    # in the environment of a server with Groq switched off describes nothing.
-    sanitized_model = str(groq_model).strip() if server_configured and groq_model else None
-    classroom_enabled = _classroom_groq(stored)
+    # in the environment of a server with Gemini switched off describes nothing.
+    sanitized_model = str(gemini_model).strip() if server_configured and gemini_model else None
+    classroom_enabled = _classroom_gemini(stored)
 
     if not server_configured:
         status = "unavailable"
@@ -1768,9 +1768,9 @@ async def read_settings(
                 for key, value in effective.items()
                 if key.startswith("notifications.")
             },
-            "features": {"groq_advisory": classroom_enabled},
-            "groq": {
-                # "configured" means the server has Groq switched on, which the
+            "features": {"gemini_advisory": classroom_enabled},
+            "gemini": {
+                # "configured" means the server has Gemini switched on, which the
                 # config refuses to allow without a key and a model. It says
                 # nothing about the key itself.
                 "server": "configured" if server_configured else "not_configured",
@@ -1784,21 +1784,8 @@ async def read_settings(
     }
 
 
-#: The Groq classroom setting, and the older keys still read after it so a
-#: database that stored only one of them keeps its value. Nothing writes those
-#: any more; `app.groq_advisory_enabled()` reads them in the same order.
-GROQ_SETTING_KEYS = (
-    "features.groq_advisory",
-    "features.groq_enabled",
-    "features.groq_feedback_enabled",
-)
-
-
-def _classroom_groq(stored: dict[str, Any]) -> bool:
-    for key in GROQ_SETTING_KEYS:
-        if key in stored:
-            return stored[key] is True
-    return False
+def _classroom_gemini(stored: dict[str, Any]) -> bool:
+    return stored.get("features.gemini_advisory") is True
 
 
 async def _stored_settings(connection: Any) -> dict[str, Any]:
@@ -1830,7 +1817,7 @@ async def update_settings(
     """
     stored = await _stored_settings(connection)
     effective = {**SETTING_DEFAULTS, **stored}
-    effective["features.groq_advisory"] = _classroom_groq(stored)
+    effective["features.gemini_advisory"] = _classroom_gemini(stored)
 
     changes = [
         {"key": key, "from": effective.get(key), "to": value}

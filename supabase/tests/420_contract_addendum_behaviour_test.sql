@@ -376,14 +376,14 @@ values
    'HIGH', 'Teacher Consultation');
 
 select throws_ok(
-  $$ update app.interventions set ai_model = 'some-model', ai_provider = 'groq'
+  $$ update app.interventions set ai_model = 'some-model', ai_provider = 'gemini'
      where interventions.intervention_id = '1a000000-0000-4000-8000-000000000001' $$,
   '23514', null::text,
   'Advisory provenance cannot be recorded without any advisory output to attribute'
 );
 
 update app.interventions
-set ai_insight = 'Advisory summary', ai_provider = 'groq', ai_model = 'some-model',
+set ai_insight = 'Advisory summary', ai_provider = 'gemini', ai_model = 'some-model',
     ai_confidence_score = 0.820, ai_generated_at = now()
 where interventions.intervention_id = '1a000000-0000-4000-8000-000000000001';
 

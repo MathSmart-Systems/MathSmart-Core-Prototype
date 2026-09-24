@@ -5,9 +5,9 @@ two reasons throughout: the columns that decide correctness are ones the API
 connection cannot read, and the learner's own records are SELECT-only for them.
 
 `ai_feedback` and `ai_hint` are the only advisory fields in the module. They are
-null unless Groq answered, and no score, band, pass decision or intervention
+null unless Gemini answered, and no score, band, pass decision or intervention
 depends on them. `ai_hint` is wording placed beside the authored hint, never
-instead of it, so a learner whose Groq call is off, slow or refused reads
+instead of it, so a learner whose Gemini call is off, slow or refused reads
 exactly the hint their teacher wrote.
 """
 
@@ -39,8 +39,8 @@ from modules.activities.schemas import (
     SubmitActivityRequest,
 )
 
-# The one gate that decides whether Groq may be asked anything, imported rather
-# than restated. A Teacher/Administrator who turns `features.groq_advisory` off
+# The one gate that decides whether Gemini may be asked anything, imported rather
+# than restated. A Teacher/Administrator who turns `features.gemini_advisory` off
 # means it off everywhere, and a second copy of that rule here would be a second
 # thing to keep true.
 from modules.ai.service import is_advisory_enabled
@@ -57,7 +57,7 @@ LOCKED_MESSAGE = (
 LOCKED_CODE = "content_locked"
 
 #: What the adapter is asked to do. Wording is the whole of it: the hint itself
-#: is authored, and Groq is given no say in what it says.
+#: is authored, and Gemini is given no say in what it says.
 HINT_PURPOSE = "optional hint wording"
 
 logger = logging.getLogger(__name__)
@@ -122,7 +122,7 @@ def _question(row: Any) -> DeliveredQuestion:
 
 
 async def _advisory_hint(request: Request, *, actor: Any, authored: str | None) -> str | None:
-    """Groq's rephrasing of an authored hint, or None.
+    """Gemini's rephrasing of an authored hint, or None.
 
     Advisory in the strict sense the module docstring means. It is returned
     beside the authored hint rather than in place of it, it decides nothing, and
@@ -142,7 +142,7 @@ async def _advisory_hint(request: Request, *, actor: Any, authored: str | None) 
     if not await is_advisory_enabled(request, actor):
         return None
 
-    adviser = getattr(request.app.state, "groq", None)
+    adviser = getattr(request.app.state, "ai", None)
     if adviser is None:
         return None
 
@@ -316,7 +316,7 @@ async def check_answer(
         hint_available=bool(row["hint_available"]),
         # Null deliberately. The player asks `/ai/incorrect-answer-explanation`
         # itself once it has this verdict, so advising here would make the
-        # verdict wait on Groq for text the learner is about to be offered
+        # verdict wait on Gemini for text the learner is about to be offered
         # anyway — and the verdict is the thing that must never wait.
         ai_feedback=None,
     )
@@ -335,10 +335,10 @@ async def read_hint(
 
     Neither discloses the answer. `hint` is the authored text and is what the
     learner reads; `ai_hint` is extra wording offered beside it and is null
-    whenever Groq is disabled, silent, slow or unexpected.
+    whenever Gemini is disabled, silent, slow or unexpected.
 
     The adapter is on `app.state`, so this handler takes the `Request` every
-    other Groq caller takes rather than a new injected dependency. A dependency
+    other Gemini caller takes rather than a new injected dependency. A dependency
     would be a second route to the same singleton, and the feature gate shared
     with `/ai/*` needs the request regardless.
     """

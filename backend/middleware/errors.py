@@ -28,7 +28,7 @@ from middleware.request_context import REQUEST_ID_HEADER, current_request_id
 logger = logging.getLogger(__name__)
 
 #: Machine-readable code per status. The two the documentation names verbatim
-#: are `validation_error` and `groq_assistance_unavailable`; the rest follow the
+#: are `validation_error` and `gemini_assistance_unavailable`; the rest follow the
 #: documented meaning of each status in the same style.
 _CODE_BY_STATUS = {
     400: "bad_request",

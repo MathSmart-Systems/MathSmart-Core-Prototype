@@ -2,7 +2,7 @@
 
 Starlette's synchronous ``TestClient`` is a known local baseline hang.  These
 tests exercise the same FastAPI routes and dependencies through httpx's ASGI
-transport instead, with a mock adviser and no external Groq request.
+transport instead, with a mock adviser and no external Gemini request.
 """
 
 from datetime import UTC, datetime
@@ -18,7 +18,7 @@ from modules.interventions.tests.test_interventions import (
     WRITTEN_ROW,
     intervention_connection,
 )
-from modules.shared.groq_adapter import AdvisoryResult
+from modules.shared.gemini_adapter import AdvisoryResult
 from modules.shared.testing import (
     ADVISER_HEADERS,
     LEARNER_HEADERS,
@@ -48,7 +48,7 @@ SUPPORT_PLAN = (
 )
 
 
-class MockGroq:
+class MockGemini:
     """A server-side adviser with observable, bounded evidence."""
 
     def __init__(self, *, answers: dict[str, str | None], enabled: bool = True) -> None:
@@ -63,25 +63,25 @@ class MockGroq:
             return None
         return AdvisoryResult(
             text=text,
-            provider="groq",
+            provider="gemini",
             model="test-model",
             generated_at=datetime.now(UTC),
         )
 
 
-def app_for(connection, groq: MockGroq, *, server_enabled: bool = True):
+def app_for(connection, ai: MockGemini, *, server_enabled: bool = True):
     settings = fake_settings()
-    settings.groq_enabled = server_enabled
+    settings.gemini_enabled = server_enabled
     if server_enabled:
-        settings.groq_model = "test-model"
-        settings.groq_api_key = SecretStr("gsk_test")
-    connection.results.setdefault("app.groq_advisory_enabled()", True)
+        settings.gemini_model = "test-model"
+        settings.gemini_api_key = SecretStr("gsk_test")
+    connection.results.setdefault("app.gemini_advisory_enabled()", True)
     return create_app(
         settings=settings,
         token_verifier=FakeVerifier(),
         database=FakeDatabase(connection),
         session_gateway=FakeSessionGateway(),
-        groq=groq,
+        ai=ai,
     )
 
 
@@ -93,10 +93,10 @@ def client_for(application):
 
 @pytest.mark.asyncio
 async def test_retained_ai_routes_are_teacher_only_and_keep_credentials_server_side():
-    groq = MockGroq(
+    ai = MockGemini(
         answers={"teacher insight": TEACHING_NOTE, "pattern analysis": "Review sign rules."}
     )
-    application = app_for(FakeConnection(), groq)
+    application = app_for(FakeConnection(), ai)
 
     async with client_for(application) as client:
         learner = await client.post(
@@ -118,10 +118,10 @@ async def test_retained_ai_routes_are_teacher_only_and_keep_credentials_server_s
     assert learner.status_code == 403
     assert insight.status_code == 200
     assert patterns.status_code == 200
-    assert len(groq.calls) == 2
+    assert len(ai.calls) == 2
     assert "test-model" not in insight.text
     assert "gsk_test" not in insight.text
-    assert patterns.json()["data"]["provider"] == "groq"
+    assert patterns.json()["data"]["provider"] == "gemini"
 
 
 @pytest.mark.asyncio
@@ -129,8 +129,8 @@ async def test_case_suggestion_is_persisted_then_removed_only_for_a_teacher():
     connection = intervention_connection(
         **{ATTACH: WRITTEN_ROW, CLEAR: WRITTEN_ROW}
     )
-    groq = MockGroq(answers={"intervention support plan": SUPPORT_PLAN})
-    application = app_for(connection, groq)
+    ai = MockGemini(answers={"intervention support plan": SUPPORT_PLAN})
+    application = app_for(connection, ai)
 
     async with client_for(application) as client:
         created = await client.post(
@@ -147,7 +147,7 @@ async def test_case_suggestion_is_persisted_then_removed_only_for_a_teacher():
     assert dismissed.status_code == 200
     assert any(ATTACH in statement for statement in statements)
     assert any(CLEAR in statement for statement in statements)
-    evidence = groq.calls[0]["evidence"]
+    evidence = ai.calls[0]["evidence"]
     assert ROW["full_name"] not in repr(evidence)
     assert ROW["learner_id"] not in repr(evidence)
 
@@ -157,7 +157,7 @@ async def test_disabled_advice_leaves_the_intervention_unchanged():
     connection = intervention_connection(**{ATTACH: WRITTEN_ROW})
     application = app_for(
         connection,
-        MockGroq(answers={"intervention support plan": SUPPORT_PLAN}, enabled=False),
+        MockGemini(answers={"intervention support plan": SUPPORT_PLAN}, enabled=False),
         server_enabled=False,
     )
 
@@ -168,5 +168,5 @@ async def test_disabled_advice_leaves_the_intervention_unchanged():
         )
 
     assert response.status_code == 503
-    assert response.json()["error"]["code"] == "groq_assistance_unavailable"
+    assert response.json()["error"]["code"] == "gemini_assistance_unavailable"
     assert not [statement for statement, _args in connection.calls if ATTACH in statement]

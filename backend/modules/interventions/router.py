@@ -15,7 +15,7 @@ suggestion, and the evidence that leaves the building is assembled here from
 the case's own deterministic record; the answer is written to the case's
 advisory columns without ever passing through a browser. Storing a suggestion
 changes nothing about severity, status, type or the educator's own notes, so a
-case reads the same with Groq switched off as with it switched on.
+case reads the same with Gemini switched off as with it switched on.
 """
 
 from __future__ import annotations
@@ -313,7 +313,7 @@ async def suggest_for_intervention(
     request: Request,
     intervention_id: UUID,
 ) -> dict[str, Any]:
-    """Ask Groq for a support plan on one case, and keep what it said.
+    """Ask Gemini for a support plan on one case, and keep what it said.
 
     The teacher asks for this; nothing generates a suggestion on its own. The
     evidence sent is assembled here from the case's own deterministic record,
@@ -329,7 +329,7 @@ async def suggest_for_intervention(
 
     Storing is not applying. Severity, status, type and the educator's notes are
     untouched, and the teacher still has to decide what — if anything — to
-    record. When Groq is disabled, unreachable, slow or incoherent, this route
+    record. When Gemini is disabled, unreachable, slow or incoherent, this route
     answers 503 and the case is exactly as it was.
     """
     row = await repository.intervention(connection, intervention_id)

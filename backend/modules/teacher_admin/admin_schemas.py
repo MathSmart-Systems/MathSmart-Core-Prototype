@@ -35,13 +35,13 @@ MAX_SETTINGS = 40
 #: this is the earlier, clearer refusal.
 PUBLISHABLE_QUESTION_TYPES = {"multiple_choice", "number_input", "fill_blank"}
 
-#: The only namespaces app.system_settings accepts. Credentials and the Groq
+#: The only namespaces app.system_settings accepts. Credentials and the Gemini
 #: model are `.env` values and can never be stored here.
 SETTING_NAMESPACES = ("thresholds", "intervention", "notifications", "features")
 ACCEPTED_SETTING_KEYS = frozenset({
     "thresholds.activity_pass_percentage",
     "intervention.unsuccessful_attempts",
-    "features.groq_advisory",
+    "features.gemini_advisory",
 })
 
 
@@ -485,7 +485,7 @@ class SettingsChanges(BaseModel):
                 if not isinstance(value, int) or isinstance(value, bool):
                     raise ValueError("intervention.unsuccessful_attempts must be an integer")
                 validate_intervention_trigger(value)
-            elif key == "features.groq_advisory":
+            elif key == "features.gemini_advisory":
                 if not isinstance(value, bool):
                     raise ValueError(f"{key} must be a boolean")
         return self

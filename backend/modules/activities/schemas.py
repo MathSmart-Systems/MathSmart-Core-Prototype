@@ -3,7 +3,7 @@
 As in the assessments module, the shapes here cannot express an answer key, a
 correct answer, or a learner other than the caller. `ai_feedback` is present and
 optional because the route contract has a place for advisory phrasing; nothing
-depends on it, and it is null whenever Groq is off or silent.
+depends on it, and it is null whenever Gemini is off or silent.
 """
 
 from __future__ import annotations

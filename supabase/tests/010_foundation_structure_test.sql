@@ -210,8 +210,8 @@ select ok(has_table_privilege('service_role', 'app.student_profiles'::regclass, 
 --                            and nothing else: one integer for the caller's
 --                            own open cases, read past a table learners may
 --                            not select from.
---   groq_advisory_enabled    one boolean: whether the classroom setting allows
---                            Groq, asked by advisory calls made for learners,
+--   gemini_advisory_enabled    one boolean: whether the classroom setting allows
+--                            Gemini, asked by advisory calls made for learners,
 --                            who may not read app.system_settings.
 --   report_question_misses   per-question answer totals for Reports, reading
 --                            practice correctness a teacher may not select
@@ -259,7 +259,7 @@ select is(
   || 'clear_intervention_advice,complete_assessment_submission_idempotency,'
   || 'complete_module,'
   || 'enforce_activity_attempt_unlocked,enforce_module_progress_unlocked,'
-  || 'groq_advisory_enabled,is_active_account,may_start_reassessment,module_activity_passed,'
+  || 'gemini_advisory_enabled,is_active_account,may_start_reassessment,module_activity_passed,'
   || 'module_has_required_activity,module_is_locked_for,module_is_satisfied,'
   || 'module_section_ids,'
   || 'open_intervention,own_open_intervention_count,purge_learner_audit_trail,'

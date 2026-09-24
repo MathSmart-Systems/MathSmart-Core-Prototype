@@ -165,7 +165,7 @@ export async function fetchStudent(studentId) {
  * One learner's deterministic progress evidence.
  *
  * Scores, mastery bands, growth and attempt counts all come from here and are
- * never inferred in the browser. Nothing on this path involves Groq.
+ * never inferred in the browser. Nothing on this path involves Gemini.
  */
 export async function fetchStudentProgress(studentId) {
   return apiRequest("GET", `/progress/${studentId}`);

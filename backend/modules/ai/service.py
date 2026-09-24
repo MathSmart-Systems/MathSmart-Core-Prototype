@@ -1,4 +1,4 @@
-"""The advisory boundary, shared by every feature that may ask Groq something.
+"""The advisory boundary, shared by every feature that may ask Gemini something.
 
 The `/ai/*` routes were the only caller for a long time, so the gate, the
 adapter lookup and the provenance block lived inside the router as private
@@ -7,7 +7,7 @@ same advice, generated the same way, but written onto a case rather than
 returned to a browser.
 
 Copying those helpers into that module would have produced a second definition
-of "is Groq allowed to answer right now", and the first one to drift would have
+of "is Gemini allowed to answer right now", and the first one to drift would have
 been the one nobody noticed. So the boundary moved here instead, and both
 callers use it. Nothing in this module talks to a browser: it takes a request
 (for the adapter and the flags on `app.state`), a purpose, and evidence, and it
@@ -31,14 +31,14 @@ from modules.ai.schemas import Provenance
 #: The single code every advisory failure answers with. Disabled by policy, no
 #: credential, a timeout, a rate limit and a reply in an unexpected shape are
 #: all the same thing to a caller who already has the deterministic answer.
-UNAVAILABLE = "groq_assistance_unavailable"
+UNAVAILABLE = "gemini_assistance_unavailable"
 
 UNAVAILABLE_MESSAGE = "AI assistance is not available"
 
 
 def adapter(request: Request) -> Any:
-    """The configured Groq adapter, or the documented 503."""
-    adviser = request.app.state.groq
+    """The configured Gemini adapter, or the documented 503."""
+    adviser = request.app.state.ai
     if adviser is None:
         raise ApiError(503, UNAVAILABLE_MESSAGE, code=UNAVAILABLE)
     return adviser
@@ -59,22 +59,22 @@ def evidence_from(model: Any) -> dict[str, Any]:
 
 #: The classroom setting, asked as the caller. One boolean; see the migration
 #: that defines it for why a learner may ask it and still not read the table.
-_GATE_SQL = "select app.groq_advisory_enabled()"
+_GATE_SQL = "select app.gemini_advisory_enabled()"
 
 
 async def is_advisory_enabled(request: Request, actor: Any = None) -> bool:
-    """True only when the server allows Groq AND the classroom setting is on.
+    """True only when the server allows Gemini AND the classroom setting is on.
 
-    The server side is `GROQ_ENABLED` plus a configured adapter. The classroom
-    side is `features.groq_advisory`, read through the one database gateway
+    The server side is `GEMINI_ENABLED` plus a configured adapter. The classroom
+    side is `features.gemini_advisory`, read through the one database gateway
     under the caller's own actor context. No actor, no database, or any error
     reading it is "off": optional advice never guesses its way into being on.
     """
     settings = getattr(request.app.state, "settings", None)
-    if not bool(getattr(settings, "groq_enabled", False)):
+    if not bool(getattr(settings, "gemini_enabled", False)):
         return False
 
-    adviser = getattr(request.app.state, "groq", None)
+    adviser = getattr(request.app.state, "ai", None)
     if adviser is None or not bool(getattr(adviser, "enabled", True)):
         return False
 

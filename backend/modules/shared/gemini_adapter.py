@@ -1,6 +1,6 @@
-"""The server-side Groq adapter.
+"""The server-side Gemini adapter.
 
-Groq is advisory. It never decides correctness, a score, a mastery band, an
+Gemini is advisory. It never decides correctness, a score, a mastery band, an
 unlock, an intervention trigger, a role or a permission, and no caller here may
 treat its output as authoritative.
 
@@ -8,11 +8,11 @@ The whole surface is therefore one method that returns advice **or nothing**.
 Disabled by feature flag, timed out, rate limited, refused, or answering with a
 shape we did not expect all produce the same result: `None`, and the caller
 falls back to authored deterministic content. Nothing in this module raises into
-a request path, so no grade or progress transaction can roll back because Groq
+a request path, so no grade or progress transaction can roll back because Gemini
 failed.
 
 The credential is read once through `SecretStr.get_secret_value()` when a
-request is built, is sent only as an Authorization header, and is never logged,
+request is built, is sent only in the `x-goog-api-key` header, and is never logged,
 returned, or included in a prompt. The selected model is deployment
 configuration and cannot be supplied by an API request.
 """
@@ -30,7 +30,9 @@ from app.config import Settings
 
 logger = logging.getLogger(__name__)
 
-GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions"
+GEMINI_GENERATE_CONTENT_URL_TEMPLATE = (
+    "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+)
 
 #: Evidence keys that must never reach a prompt. Identity, because the
 #: documentation prefers pseudonymous learner references over names, and
@@ -96,8 +98,8 @@ class AdvisoryResult:
     confidence: float | None = None
 
 
-class GroqAdapter:
-    """Bounded, feature-flagged access to Groq. Fails to `None`, never upward."""
+class GeminiAdapter:
+    """Bounded, feature-flagged access to Gemini. Fails to `None`, never upward."""
 
     def __init__(self, settings: Settings, *, client: httpx.AsyncClient | None = None) -> None:
         self._settings = settings
@@ -105,11 +107,11 @@ class GroqAdapter:
 
     def __repr__(self) -> str:
         # Deliberately says nothing about the credential.
-        return f"GroqAdapter(enabled={self._settings.groq_enabled!r})"
+        return f"GeminiAdapter(enabled={self._settings.gemini_enabled!r})"
 
     @property
     def enabled(self) -> bool:
-        return self._settings.groq_enabled
+        return self._settings.gemini_enabled
 
     async def advise(
         self,
@@ -119,7 +121,7 @@ class GroqAdapter:
         instructions: str | None = None,
         max_tokens: int | None = None,
     ) -> AdvisoryResult | None:
-        """Ask Groq for advisory text, or return None so the caller uses its own.
+        """Ask Gemini for advisory text, or return None so the caller uses its own.
 
         `instructions` lets a caller say what shape it needs back — a JSON
         object with named fields, a word budget, no Markdown. Without it the
@@ -130,35 +132,40 @@ class GroqAdapter:
         has. Both are optional, and leaving them out is the behaviour every
         existing caller already relies on.
         """
-        if not self._settings.groq_enabled:
+        if not self._settings.gemini_enabled:
             return None
 
-        api_key = self._settings.groq_api_key
-        model = self._settings.groq_model
+        api_key = self._settings.gemini_api_key
+        model = self._settings.gemini_model
         if api_key is None or not model:
             return None
 
+        clean_model = model[7:] if model.startswith("models/") else model
         payload: dict[str, Any] = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": _system_prompt(purpose, instructions)},
-                {"role": "user", "content": _evidence_prompt(redact_evidence(evidence))},
-            ],
+            "systemInstruction": {
+                "parts": [{"text": _system_prompt(purpose, instructions)}]
+            },
+            "contents": [{
+                "role": "user",
+                "parts": [{"text": _evidence_prompt(redact_evidence(evidence))}]
+            }]
         }
+
+        # Note: Gemini uses `generationConfig` for `maxOutputTokens`.
         if max_tokens is not None:
-            payload["max_tokens"] = max_tokens
+            payload["generationConfig"] = {"maxOutputTokens": max_tokens}
 
         try:
-            response = await self._post(payload, api_key.get_secret_value())
+            response = await self._post(payload, api_key.get_secret_value(), clean_model)
         except (httpx.HTTPError, TimeoutError):
             # Deliberately not re-raised. A failure here must never surface as a
             # request failure, because the deterministic result is already correct.
-            logger.warning("Groq advisory request failed for purpose %s", purpose, exc_info=False)
+            logger.warning("Gemini advisory request failed for purpose %s", purpose, exc_info=False)
             return None
 
         if response.status_code != httpx.codes.OK:
             logger.warning(
-                "Groq advisory request returned %s for purpose %s: %s",
+                "Gemini advisory request returned %s for purpose %s: %s",
                 response.status_code,
                 purpose,
                 response.text,
@@ -167,27 +174,33 @@ class GroqAdapter:
 
         text = _extract_text(response)
         if text is None:
-            logger.warning("Groq advisory response had an unexpected shape for purpose %s", purpose)
+            logger.warning(
+                "Gemini advisory response had an unexpected shape for purpose %s", purpose
+            )
             return None
 
         return AdvisoryResult(
             text=text,
-            provider="groq",
+            provider="gemini",
             model=model,
             generated_at=datetime.now(UTC),
         )
 
-    async def _post(self, payload: dict[str, Any], api_key: str) -> httpx.Response:
-        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-        timeout = self._settings.groq_timeout_seconds
+    async def _post(self, payload: dict[str, Any], api_key: str, model: str) -> httpx.Response:
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key,
+        }
+        timeout = self._settings.gemini_timeout_seconds
+
+        clean_model = model[7:] if model.startswith("models/") else model
+        url = GEMINI_GENERATE_CONTENT_URL_TEMPLATE.format(model=clean_model)
 
         if self._client is not None:
-            return await self._client.post(
-                GROQ_CHAT_COMPLETIONS_URL, json=payload, headers=headers, timeout=timeout
-            )
+            return await self._client.post(url, json=payload, headers=headers, timeout=timeout)
 
         async with httpx.AsyncClient(timeout=timeout) as client:
-            return await client.post(GROQ_CHAT_COMPLETIONS_URL, json=payload, headers=headers)
+            return await client.post(url, json=payload, headers=headers)
 
 
 def _system_prompt(purpose: str, instructions: str | None = None) -> str:
@@ -207,7 +220,7 @@ def _evidence_prompt(evidence: dict[str, Any]) -> str:
 def _extract_text(response: httpx.Response) -> str | None:
     try:
         body = response.json()
-        content = body["choices"][0]["message"]["content"]
+        content = body["candidates"][0]["content"]["parts"][0]["text"]
     except (ValueError, KeyError, IndexError, TypeError):
         return None
     return content if isinstance(content, str) and content.strip() else None

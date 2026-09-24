@@ -168,13 +168,13 @@ export function archiveIntervention(interventionId) {
  * Asks the server for advisory support on one case, and keeps what it said.
  *
  * The browser sends no evidence and no text. The API assembles the evidence
- * from the case's own deterministic record, calls Groq server-side, and stores
+ * from the case's own deterministic record, calls Gemini server-side, and stores
  * the answer in the case's advisory columns, so nothing a client could write
  * can arrive in a field the interface labels as machine-written.
  *
  * Storing is not applying: severity, status, type and the educator's notes are
  * untouched, and the teacher still decides what to record. A refusal carries
- * `code === "groq_assistance_unavailable"` and leaves the case unchanged.
+ * `code === "gemini_assistance_unavailable"` and leaves the case unchanged.
  *
  * @param {string} interventionId
  */

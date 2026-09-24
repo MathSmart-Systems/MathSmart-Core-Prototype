@@ -1,7 +1,7 @@
 /**
  * Deterministic helpers for the Teacher Interventions workspace.
  *
- * Everything here is computed from API evidence only. Groq never feeds these
+ * Everything here is computed from API evidence only. Gemini never feeds these
  * decisions: severity ordering, status transitions, and score formatting are
  * the same whether or not AI assistance is configured.
  */
@@ -416,15 +416,15 @@ export function suggestionFailure(result, { caseClosed = false } = {}) {
   if (status === 404 || code === "api_unconfigured") {
     return "Suggestions are not available here yet. The case is unchanged.";
   }
-  if (status === 503 || code === "groq_assistance_unavailable") {
-    return "AI is currently busy, please try again in a minute. Your notes and the evidence are unchanged.";
+  if (status === 503 || code === "gemini_assistance_unavailable") {
+    return "The suggestion could not be produced just now. AI is currently busy, please try again in a minute. Your notes and the evidence are unchanged.";
   }
   return "The suggestion could not be produced just now. Your notes and the evidence are unchanged.";
 }
 
 /**
  * Reads one advisory reply into the shape the panels render, or null when
- * nothing usable came back. Disabled (503 groq_assistance_unavailable),
+ * nothing usable came back. Disabled (503 gemini_assistance_unavailable),
  * timeouts, network failure, and malformed or empty text all collapse to null,
  * which is the graceful fallback the deterministic UI is built on.
  *
@@ -468,7 +468,7 @@ export function formatGeneratedAt(value) {
 /**
  * When a suggestion was written, and by what kind of thing.
  *
- * Deliberately not the model identifier. `GROQ_MODEL` is a deployment value
+ * Deliberately not the model identifier. `GEMINI_MODEL` is a deployment value
  * from `.env`, and `AGENTS.md` is explicit that `.env` values are never
  * printed, logged, documented or exposed — putting one under a teacher's
  * suggestion did exactly that. It also told the reader nothing: "openai/

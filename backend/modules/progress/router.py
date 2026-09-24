@@ -7,7 +7,7 @@ means that even if this check were wrong, the view would still resolve to their
 own row.
 
 Growth is `current - diagnostic`. The recommended next action is the first
-available item of the learner's own path. Neither consults Groq.
+available item of the learner's own path. Neither consults Gemini.
 
 The counts a learner is shown are pairs, and each pair is drawn from one set:
 mastery is counted against the competencies published for their grade, and

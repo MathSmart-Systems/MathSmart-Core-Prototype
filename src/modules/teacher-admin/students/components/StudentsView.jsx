@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Plus, RotateCcw, Search, Trash2, UserMinus, Users } from "lucide-react";
 
@@ -23,6 +23,23 @@ function readDensity() {
   } catch {
     // Graceful fallback
   }
+  return "comfortable";
+}
+
+function subscribeDensity(callback) {
+  window.addEventListener("mathsmart:theme-change", callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener("mathsmart:theme-change", callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+function getDensitySnapshot() {
+  return readDensity();
+}
+
+function getServerDensitySnapshot() {
   return "comfortable";
 }
 
@@ -155,20 +172,12 @@ export function StudentsView({
   const [sectionCounts, setSectionCounts] = useState(initialSectionCounts);
   const [pageError, setPageError] = useState(null);
 
-  // Density preference: read on mount and listen for live changes from Settings > Display.
-  const [density, setDensity] = useState(() => readDensity());
-
-  useEffect(() => {
-    const handleDensityChange = (e) => {
-      if (e.detail?.density) {
-        setDensity(e.detail.density);
-      } else {
-        setDensity(readDensity());
-      }
-    };
-    window.addEventListener("mathsmart:theme-change", handleDensityChange);
-    return () => window.removeEventListener("mathsmart:theme-change", handleDensityChange);
-  }, []);
+  // Density preference: synchronized via useSyncExternalStore to avoid hydration mismatches.
+  const density = useSyncExternalStore(
+    subscribeDensity,
+    getDensitySnapshot,
+    getServerDensitySnapshot,
+  );
 
   const rowPadding = density === "compact" ? "px-4 py-2" : "px-4 py-3";
   const headPadding = density === "compact" ? "px-4 py-2" : "px-4 py-3";

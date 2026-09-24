@@ -1,7 +1,7 @@
 """Deterministic scoring, banding and intervention rules.
 
 These are the values the frozen documentation says are decided by server-side
-rules and never by Groq, and they must agree exactly with the CHECK constraints
+rules and never by Gemini, and they must agree exactly with the CHECK constraints
 in the database, which enforce the same two derivations.
 """
 

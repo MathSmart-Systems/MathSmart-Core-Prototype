@@ -19,7 +19,7 @@ function Stat({ label, value }) {
  * Rendered into document.body (outside any dialog portal) so the global print
  * stylesheet can hide the whole app shell and show only this pane. The browser
  * print dialog produces the PDF ("Save as PDF"). The content is deterministic
- * evidence only — no Groq text is ever printed — and the pane holds nothing
+ * evidence only — no Gemini text is ever printed — and the pane holds nothing
  * interactive, so it is purely a print target.
  *
  * @param {object} props
