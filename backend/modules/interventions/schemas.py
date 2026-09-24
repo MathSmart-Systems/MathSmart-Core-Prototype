@@ -2,7 +2,7 @@
 
 The request models carry the educator's decision and nothing else. There is no
 field for the educator, because that comes from the verified token, and no field
-for advisory text, because Groq output is written by the AI routes and never
+for advisory text, because Gemini output is written by the AI routes and never
 asserted by a caller.
 """
 

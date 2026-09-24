@@ -7,7 +7,7 @@ nothing else.
 
 The exceptions are the two things `authenticated` deliberately cannot write —
 an account's status and a voided attempt — which go through audited functions,
-and settings, which must never carry a credential or the Groq model.
+and settings, which must never carry a credential or the Gemini model.
 """
 
 import json
@@ -1890,9 +1890,9 @@ def test_settings_never_carry_a_credential_or_an_editable_model():
     response = client.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS)
 
     body = response.text
-    for forbidden in ("api_key", "apikey", "secret", "sb_secret", "GROQ_API_KEY"):
+    for forbidden in ("api_key", "apikey", "secret", "sb_secret", "GEMINI_API_KEY"):
         assert forbidden.lower() not in body.lower()
-    assert response.json()["data"]["groq"]["model_is_editable"] is False
+    assert response.json()["data"]["gemini"]["model_is_editable"] is False
 
 
 def test_a_setting_outside_the_allowed_namespaces_is_refused():
@@ -1900,7 +1900,7 @@ def test_a_setting_outside_the_allowed_namespaces_is_refused():
 
     response = client.patch(
         "/api/v1/teacher-admin/settings",
-        json={"settings": {"groq.api_key": "sb_secret_value"}},
+        json={"settings": {"gemini.api_key": "sb_secret_value"}},
         headers=ADVISER_HEADERS,
     )
 
@@ -1932,8 +1932,8 @@ def test_settings_report_sanitized_model_identifier():
 
 
     settings = fake_settings()
-    settings.groq_enabled = True
-    settings.groq_model = "llama-3.3-70b-versatile"
+    settings.gemini_enabled = True
+    settings.gemini_model = "llama-3.3-70b-versatile"
 
     app = create_app(
         settings=settings,
@@ -1944,10 +1944,10 @@ def test_settings_report_sanitized_model_identifier():
     client = TestClient(app, raise_server_exceptions=False)
     response = client.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS)
     assert response.status_code == 200
-    groq_data = response.json()["data"]["groq"]
-    assert groq_data["model"] == "llama-3.3-70b-versatile"
-    assert groq_data["server"] == "configured"
-    assert groq_data["model_is_editable"] is False
+    gemini_data = response.json()["data"]["gemini"]
+    assert gemini_data["model"] == "llama-3.3-70b-versatile"
+    assert gemini_data["server"] == "configured"
+    assert gemini_data["model_is_editable"] is False
 
 
 def test_settings_reject_out_of_bounds_values():
@@ -1988,7 +1988,7 @@ def test_settings_reject_out_of_bounds_values():
     # Boolean flags must be bool
     r5 = client.patch(
         "/api/v1/teacher-admin/settings",
-        json={"settings": {"features.groq_advisory": "yes"}},
+        json={"settings": {"features.gemini_advisory": "yes"}},
         headers=ADVISER_HEADERS,
     )
     assert r5.status_code == 422
@@ -2003,16 +2003,16 @@ def test_settings_reject_out_of_bounds_values():
     assert "not allowed" in str(r6.json()["error"]["fields"])
 
 
-def test_settings_accept_features_groq_advisory():
+def test_settings_accept_features_gemini_advisory():
     client = build_client(admin_connection())
 
     response = client.patch(
         "/api/v1/teacher-admin/settings",
-        json={"settings": {"features.groq_advisory": True}},
+        json={"settings": {"features.gemini_advisory": True}},
         headers=ADVISER_HEADERS,
     )
     assert response.status_code == 200
-    assert "features.groq_advisory" in response.json()["data"]["updated"]
+    assert "features.gemini_advisory" in response.json()["data"]["updated"]
 
 
 def test_settings_update_is_audited():
@@ -3839,11 +3839,11 @@ def test_an_assessment_row_names_a_draft_competency_behind_its_questions():
 
 
 # ---------------------------------------------------------------------------
-# The Groq classroom setting
+# The Gemini classroom setting
 # ---------------------------------------------------------------------------
 
 
-def _settings_client(connection, *, server_groq_enabled=False, model=None):
+def _settings_client(connection, *, server_gemini_enabled=False, model=None):
     from fastapi.testclient import TestClient
 
     from app.main import create_app
@@ -3855,8 +3855,8 @@ def _settings_client(connection, *, server_groq_enabled=False, model=None):
     )
 
     settings = fake_settings()
-    settings.groq_enabled = server_groq_enabled
-    settings.groq_model = model
+    settings.gemini_enabled = server_gemini_enabled
+    settings.gemini_model = model
     app = create_app(
         settings=settings,
         token_verifier=FakeVerifier(),
@@ -3870,58 +3870,58 @@ def _stored(key, value):
     return {"setting_key": key, "setting_value": value, "updated_at": None}
 
 
-def test_groq_is_off_when_nothing_has_been_stored():
-    client = _settings_client(admin_connection(), server_groq_enabled=True, model="m")
+def test_gemini_is_off_when_nothing_has_been_stored():
+    client = _settings_client(admin_connection(), server_gemini_enabled=True, model="m")
 
-    groq = client.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()[
+    gemini = client.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()[
         "data"
-    ]["groq"]
+    ]["gemini"]
 
-    assert groq["classroom_enabled"] is False
-    assert groq["server"] == "configured"
-    assert groq["status"] == "disabled"
-    assert groq["enabled"] is False
+    assert gemini["classroom_enabled"] is False
+    assert gemini["server"] == "configured"
+    assert gemini["status"] == "disabled"
+    assert gemini["enabled"] is False
 
 
-def test_groq_status_separates_the_server_from_the_classroom_setting():
+def test_gemini_status_separates_the_server_from_the_classroom_setting():
     connection = admin_connection(
-        **{"from app.system_settings": [SETTING_ROW, _stored("features.groq_advisory", True)]}
+        **{"from app.system_settings": [SETTING_ROW, _stored("features.gemini_advisory", True)]}
     )
 
-    on = _settings_client(connection, server_groq_enabled=True, model="m")
-    groq = on.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()["data"][
-        "groq"
+    on = _settings_client(connection, server_gemini_enabled=True, model="m")
+    gemini = on.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()["data"][
+        "gemini"
     ]
-    assert (groq["server"], groq["classroom_enabled"], groq["status"]) == (
+    assert (gemini["server"], gemini["classroom_enabled"], gemini["status"]) == (
         "configured",
         True,
         "enabled",
     )
 
-    off = _settings_client(connection, server_groq_enabled=False)
-    groq = off.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()["data"][
-        "groq"
+    off = _settings_client(connection, server_gemini_enabled=False)
+    gemini = off.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()["data"][
+        "gemini"
     ]
-    assert (groq["server"], groq["classroom_enabled"], groq["status"]) == (
+    assert (gemini["server"], gemini["classroom_enabled"], gemini["status"]) == (
         "not_configured",
         True,
         "unavailable",
     )
-    assert groq["model"] is None
+    assert gemini["model"] is None
 
 
-def test_an_older_stored_key_still_counts_but_can_no_longer_be_written():
+def test_old_provider_keys_are_neither_read_nor_writable():
     connection = admin_connection(
-        **{"from app.system_settings": [_stored("features.groq_enabled", True)]}
+        **{"from app.system_settings": [_stored("features.gemini_enabled", True)]}
     )
-    client = _settings_client(connection, server_groq_enabled=True, model="m")
+    client = _settings_client(connection, server_gemini_enabled=True, model="m")
 
-    groq = client.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()[
+    gemini = client.get("/api/v1/teacher-admin/settings", headers=ADVISER_HEADERS).json()[
         "data"
-    ]["groq"]
-    assert groq["classroom_enabled"] is True
+    ]["gemini"]
+    assert gemini["classroom_enabled"] is False
 
-    for legacy in ("features.groq_enabled", "features.groq_feedback_enabled"):
+    for legacy in ("features.gemini_enabled", "features.gemini_feedback_enabled"):
         response = client.patch(
             "/api/v1/teacher-admin/settings",
             json={"settings": {legacy: False}},
@@ -3932,23 +3932,23 @@ def test_an_older_stored_key_still_counts_but_can_no_longer_be_written():
 
 def test_a_settings_change_audits_the_value_before_and_after():
     connection = admin_connection(
-        **{"from app.system_settings": [SETTING_ROW, _stored("features.groq_advisory", False)]}
+        **{"from app.system_settings": [SETTING_ROW, _stored("features.gemini_advisory", False)]}
     )
     client = build_client(connection)
 
     response = client.patch(
         "/api/v1/teacher-admin/settings",
-        json={"settings": {"features.groq_advisory": True}},
+        json={"settings": {"features.gemini_advisory": True}},
         headers=ADVISER_HEADERS,
     )
 
     assert response.status_code == 200
-    assert response.json()["data"]["updated"] == ["features.groq_advisory"]
+    assert response.json()["data"]["updated"] == ["features.gemini_advisory"]
     audited = [args for query, args in connection.calls if "app.record_audit_event" in query]
     assert len(audited) == 1
     details = json.loads(audited[0][-1])
     assert details["changes"] == [
-        {"key": "features.groq_advisory", "from": False, "to": True}
+        {"key": "features.gemini_advisory", "from": False, "to": True}
     ]
 
 
@@ -3974,7 +3974,7 @@ def test_a_learner_can_neither_read_nor_change_settings():
     read = client.get("/api/v1/teacher-admin/settings", headers=LEARNER_HEADERS)
     write = client.patch(
         "/api/v1/teacher-admin/settings",
-        json={"settings": {"features.groq_advisory": True}},
+        json={"settings": {"features.gemini_advisory": True}},
         headers=LEARNER_HEADERS,
     )
 

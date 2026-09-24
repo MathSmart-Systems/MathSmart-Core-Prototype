@@ -15,7 +15,7 @@ from modules.ai.teaching_note import (
     MAX_WORDS,
     parse_teaching_note,
 )
-from modules.ai.tests.test_ai import ADVISER_HEADERS, FakeGroq, ai_client
+from modules.ai.tests.test_ai import ADVISER_HEADERS, FakeGemini, ai_client
 
 COMPETENCY = UUID("13ec5f06-746e-45fb-a58a-92f4ce42621c")
 
@@ -236,20 +236,20 @@ def test_an_empty_reply_is_nothing():
 
 
 def test_the_route_asks_for_the_structured_shape():
-    groq = FakeGroq(text=GOOD)
-    client = ai_client(groq)
+    ai = FakeGemini(text=GOOD)
+    client = ai_client(ai)
 
     response = client.post("/api/v1/ai/teacher-insight", json=EVIDENCE, headers=ADVISER_HEADERS)
 
     assert response.status_code == 200
-    call = groq.calls[0]
+    call = ai.calls[0]
     assert '"evidence"' in call["instructions"]
     assert "150" in call["instructions"] or "120 words" in call["instructions"]
     assert call["max_tokens"]
 
 
 def test_the_route_returns_the_structured_note():
-    client = ai_client(FakeGroq(text=GOOD))
+    client = ai_client(FakeGemini(text=GOOD))
 
     data = client.post(
         "/api/v1/ai/teacher-insight", json=EVIDENCE, headers=ADVISER_HEADERS
@@ -262,7 +262,7 @@ def test_the_route_returns_the_structured_note():
 
 
 def test_the_route_never_exposes_the_provider_the_model_or_the_time():
-    client = ai_client(FakeGroq(text=GOOD))
+    client = ai_client(FakeGemini(text=GOOD))
 
     response = client.post("/api/v1/ai/teacher-insight", json=EVIDENCE, headers=ADVISER_HEADERS)
 
@@ -270,20 +270,20 @@ def test_the_route_never_exposes_the_provider_the_model_or_the_time():
     for key in ("provider", "model", "generated_at", "confidence_score"):
         assert key not in data
     assert "a-configured-model" not in response.text
-    assert "groq" not in response.text.lower()
+    assert "gemini" not in response.text.lower()
 
 
 def test_a_reply_with_nothing_readable_is_the_documented_503():
-    client = ai_client(FakeGroq(text="** ## |"))
+    client = ai_client(FakeGemini(text="** ## |"))
 
     response = client.post("/api/v1/ai/teacher-insight", json=EVIDENCE, headers=ADVISER_HEADERS)
 
     assert response.status_code == 503
-    assert response.json()["error"]["code"] == "groq_assistance_unavailable"
+    assert response.json()["error"]["code"] == "gemini_assistance_unavailable"
 
 
-def test_an_unavailable_groq_is_still_the_documented_503():
-    client = ai_client(FakeGroq(text=None))
+def test_an_unavailable_gemini_is_still_the_documented_503():
+    client = ai_client(FakeGemini(text=None))
 
     response = client.post("/api/v1/ai/teacher-insight", json=EVIDENCE, headers=ADVISER_HEADERS)
 

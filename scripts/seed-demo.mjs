@@ -60,6 +60,10 @@ function say(message) {
 
 /** Finds a record this seed already made, by the mark it carries. */
 function findMarked(rows, field, value) {
+  if (field === "code" && typeof value === "string") {
+    const target = value.toUpperCase();
+    return (rows ?? []).find((row) => (row[field] ?? "").toUpperCase() === target) ?? null;
+  }
   return (rows ?? []).find((row) => row[field] === value) ?? null;
 }
 
@@ -191,35 +195,37 @@ async function ensureActivities(token, moduleIds, questionIds) {
   for (const spec of COMPETENCIES) {
     const title = `${MODULES[spec.key].title} — Practice`;
     const already = findMarked(existing, "title", title);
+    let id;
     if (already) {
-      const id = already.activity_id ?? already.id;
-      await republish(token, "activities", id, already.status);
-      ids[spec.key] = id;
-      continue;
+      id = already.activity_id ?? already.id;
+    } else {
+      const created = await callApi(env, token, "/teacher-admin/activities", {
+        method: "POST",
+        body: {
+          module_id: moduleIds[spec.key],
+          title,
+          description: "Practise what the lesson showed you.",
+          estimated_minutes: 10,
+          points: 10,
+          mastery_threshold: 75,
+          status: "draft",
+        },
+      });
+      id = created.data.activity_id;
     }
 
-    const created = await callApi(env, token, "/teacher-admin/activities", {
-      method: "POST",
-      body: {
-        module_id: moduleIds[spec.key],
-        title,
-        description: "Practise what the lesson showed you.",
-        estimated_minutes: 10,
-        points: 10,
-        mastery_threshold: 75,
-        status: "draft",
-      },
-    });
-
-    const id = created.data.activity_id;
     await callApi(env, token, `/teacher-admin/activities/${id}/questions`, {
       method: "PUT",
       body: { question_ids: questionIds[spec.key].slice(0, 2) },
     });
-    await callApi(env, token, `/teacher-admin/activities/${id}/publish`, {
-      method: "POST",
-      body: {},
-    });
+    if (already) {
+      await republish(token, "activities", id, already.status);
+    } else {
+      await callApi(env, token, `/teacher-admin/activities/${id}/publish`, {
+        method: "POST",
+        body: {},
+      });
+    }
     ids[spec.key] = id;
   }
   return ids;
@@ -257,33 +263,35 @@ async function ensureAssessments(token, questionIds) {
   const ids = {};
   for (const spec of wanted) {
     const already = findMarked(existing, "title", spec.title);
+    let id;
     if (already) {
-      const id = already.assessment_id ?? already.id;
-      await republish(token, "assessments", id, already.status);
-      ids[spec.key] = id;
-      continue;
+      id = already.assessment_id ?? already.id;
+    } else {
+      const created = await callApi(env, token, "/teacher-admin/assessments", {
+        method: "POST",
+        body: {
+          title: spec.title,
+          assessment_type: spec.assessment_type,
+          duration_minutes: spec.duration_minutes,
+          description: spec.description,
+          status: "draft",
+        },
+      });
+      id = created.data.assessment_id;
     }
 
-    const created = await callApi(env, token, "/teacher-admin/assessments", {
-      method: "POST",
-      body: {
-        title: spec.title,
-        assessment_type: spec.assessment_type,
-        duration_minutes: spec.duration_minutes,
-        description: spec.description,
-        status: "draft",
-      },
-    });
-
-    const id = created.data.assessment_id;
     await callApi(env, token, `/teacher-admin/assessments/${id}/questions`, {
       method: "PUT",
       body: { question_ids: spec.questions },
     });
-    await callApi(env, token, `/teacher-admin/assessments/${id}/publish`, {
-      method: "POST",
-      body: {},
-    });
+    if (already) {
+      await republish(token, "assessments", id, already.status);
+    } else {
+      await callApi(env, token, `/teacher-admin/assessments/${id}/publish`, {
+        method: "POST",
+        body: {},
+      });
+    }
     ids[spec.key] = id;
   }
   return ids;

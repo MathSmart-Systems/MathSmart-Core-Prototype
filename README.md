@@ -46,7 +46,7 @@
 
 **MathSmart** is an intelligent, web-based mathematics learning platform designed to address foundational mathematics gaps among Grade 6 learners.
 
-Rather than a one-size-fits-all curriculum, MathSmart assesses individual student competencies, pinpoints conceptual misunderstandings using deterministic scoring plus Groq-assisted explanations, and delivers targeted remediation modules and interactive practice exercises. The combined Teacher/Administrator role receives real-time mastery heatmaps and intervention suggestions to support in-class learning.
+Rather than a one-size-fits-all curriculum, MathSmart assesses individual student competencies, pinpoints conceptual misunderstandings using deterministic scoring plus Gemini-assisted explanations, and delivers targeted remediation modules and interactive practice exercises. The combined Teacher/Administrator role receives real-time mastery heatmaps and intervention suggestions to support in-class learning.
 
 ---
 
@@ -99,7 +99,7 @@ graph LR
 
 ### Backend API & Math Engine
 - **Framework:** [FastAPI (Python 3.11)](https://fastapi.tiangolo.com/)
-- **Computation / AI Logic:** Deterministic Python services with NumPy/SymPy where appropriate; Groq through a server-side adapter for advisory explanations and insights
+- **Computation / AI Logic:** Deterministic Python services with NumPy/SymPy where appropriate; Gemini through a server-side adapter for advisory explanations and insights
 - **Data Validation:** Pydantic v2
 
 ### Database, Auth & Media
@@ -232,7 +232,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-Groq's API credential and selected model are existing server-side values in `.env`. Never expose either value through a `NEXT_PUBLIC_` variable, client bundle, documentation, or logs.
+Gemini's API credential and selected model are existing server-side values in `.env`. Never expose either value through a `NEXT_PUBLIC_` variable, client bundle, documentation, or logs.
 
 ---
 

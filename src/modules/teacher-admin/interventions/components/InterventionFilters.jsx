@@ -36,7 +36,7 @@ const QUIET_BUTTON_STYLE =
  * secretly narrowing your queue.
  *
  * Every control maps to a documented backend filter or a client-side snapshot
- * of the same keys. None of these decisions are made by Groq.
+ * of the same keys. None of these decisions are made by Gemini.
  *
  * @param {object} props
  * @param {object} props.filters - Current filter state

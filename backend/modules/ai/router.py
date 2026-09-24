@@ -1,4 +1,4 @@
-"""Groq assistance routes.
+"""Gemini assistance routes.
 
 Advisory, and only advisory. Nothing here decides correctness, a score, a
 mastery band, an unlock, an intervention trigger, a role or a permission — and

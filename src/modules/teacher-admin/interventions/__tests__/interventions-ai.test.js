@@ -18,7 +18,7 @@ const VALID_RESULT = {
   status: 200,
   data: {
     insight_summary: "  The learner would benefit from revisiting sign rules.  ",
-    provider: "groq",
+    provider: "gemini",
     model: "llama-3",
     generated_at: "2026-09-19T07:30:00Z",
     confidence_score: null,
@@ -64,7 +64,7 @@ const PLAN_CASE = {
     scaffold: "A place-value chart with the point drawn in red.",
     next_check: "Two similar problems on Friday.",
   },
-  ai_provider: "groq",
+  ai_provider: "gemini",
   ai_generated_at: "2026-09-19T07:30:00Z",
 };
 
@@ -74,7 +74,7 @@ test("storedPlan reads the plan as the structure the panel renders", () => {
   assert.equal(plan.gap, "Ana drops the decimal point when she divides.");
   assert.equal(plan.scaffold, "A place-value chart with the point drawn in red.");
   assert.equal(plan.nextCheck, "Two similar problems on Friday.");
-  assert.equal(plan.provider, "groq");
+  assert.equal(plan.provider, "gemini");
 });
 
 test("storedPlan never shows more than three strategies", () => {
@@ -92,7 +92,7 @@ test("storedPlan returns null for a case nobody has asked about", () => {
 test("storedPlan falls back to the plain text a case stored before plans existed", () => {
   const plan = storedPlan({
     ai_insight: "She loses the place value.",
-    ai_provider: "groq",
+    ai_provider: "gemini",
   });
 
   assert.equal(plan.gap, "She loses the place value.");
@@ -158,7 +158,7 @@ test("a failure says what is still true, not what to go and fix", () => {
   const outage = suggestionFailure({
     ok: false,
     status: 503,
-    code: "groq_assistance_unavailable",
+    code: "gemini_assistance_unavailable",
   });
 
   // No server to restart, no configuration named. A teacher needs to know

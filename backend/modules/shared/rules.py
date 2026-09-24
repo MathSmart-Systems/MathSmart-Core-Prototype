@@ -7,7 +7,7 @@ its own evidence cannot be written even if this module were wrong. Keeping both
 halves is deliberate: the backend needs to compute a value before it writes it,
 and the database needs to refuse a value it did not compute.
 
-Nothing here calls Groq, imports an AI client, or takes an advisory input.
+Nothing here calls Gemini, imports an AI client, or takes an advisory input.
 Correct or incorrect, raw and percentage scores, attempt counts, bands, unlock
 rules and intervention triggers are decided here and nowhere else.
 """

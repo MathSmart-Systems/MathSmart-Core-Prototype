@@ -19,10 +19,10 @@ def build(monkeypatch, **overrides):
     for key in (
         *BASE_ENV,
         "SUPABASE_JWT_AUDIENCE",
-        "GROQ_API_KEY",
-        "GROQ_MODEL",
-        "GROQ_ENABLED",
-        "GROQ_TIMEOUT_SECONDS",
+        "GEMINI_API_KEY",
+        "GEMINI_MODEL",
+        "GEMINI_ENABLED",
+        "GEMINI_TIMEOUT_SECONDS",
         "CORS_ORIGINS",
     ):
         monkeypatch.delenv(key, raising=False)
@@ -51,26 +51,31 @@ def test_secret_key_is_readable_deliberately(monkeypatch):
     assert settings.supabase_secret_key.get_secret_value() == "sb_secret_do_not_render_me"
 
 
-def test_groq_is_disabled_by_default_and_needs_no_credential(monkeypatch):
+def test_gemini_is_disabled_by_default_and_needs_no_credential(monkeypatch):
     settings = build(monkeypatch)
 
-    assert settings.groq_enabled is False
-    assert settings.groq_api_key is None
+    assert settings.gemini_enabled is False
+    assert settings.gemini_api_key is None
 
 
-def test_enabling_groq_without_a_credential_is_rejected(monkeypatch):
+def test_enabling_gemini_without_a_credential_is_rejected(monkeypatch):
     with pytest.raises(ValidationError):
-        build(monkeypatch, GROQ_ENABLED="true", GROQ_MODEL="some-model")
+        build(monkeypatch, GEMINI_ENABLED="true", GEMINI_MODEL="some-model")
 
 
-def test_enabling_groq_without_a_model_is_rejected(monkeypatch):
+def test_enabling_gemini_without_a_model_is_rejected(monkeypatch):
     with pytest.raises(ValidationError):
-        build(monkeypatch, GROQ_ENABLED="true", GROQ_API_KEY="gsk_example")
+        build(monkeypatch, GEMINI_ENABLED="true", GEMINI_API_KEY="gsk_example")
 
 
-def test_groq_credential_never_renders(monkeypatch):
-    """Verify Groq API credentials are masked and never leak in repr or str formats."""
-    settings = build(monkeypatch, GROQ_ENABLED="true", GROQ_API_KEY="gsk_example", GROQ_MODEL="m")
+def test_gemini_credential_never_renders(monkeypatch):
+    """Verify Gemini API credentials are masked and never leak in repr or str formats."""
+    settings = build(
+        monkeypatch,
+        GEMINI_ENABLED="true",
+        GEMINI_API_KEY="gsk_example",
+        GEMINI_MODEL="m",
+    )
 
     assert "gsk_example" not in repr(settings)
     assert "gsk_example" not in str(settings)

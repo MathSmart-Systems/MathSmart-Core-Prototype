@@ -6,9 +6,9 @@ These repository rules apply to Codex, OpenCode, Claude Code through `CLAUDE.md`
 
 - The MVP curriculum target is DepEd Grade 6 Mathematics.
 - The only production roles are `student` and `teacher_admin`. Teacher and Administrator are one combined role and workspace.
-- Groq is the production generative-AI provider. Its API credential and selected model are server-side values in `.env`.
+- Gemini is the production generative-AI provider. Its API credential and selected model are server-side values in `.env`.
 - Never read, print, copy, log, document, commit, or expose `.env` values. Use `.env.example` for non-secret variable names.
-- Deterministic grading, mastery calculation, and progression rules must work without Groq. Groq output is advisory and must fail gracefully.
+- Deterministic grading, mastery calculation, and progression rules must work without Gemini. Gemini output is advisory and must fail gracefully.
 
 ## Workspace and reference boundaries
 
@@ -30,24 +30,24 @@ These repository rules apply to Codex, OpenCode, Claude Code through `CLAUDE.md`
 - Implement meaningful loading, empty, error, disabled, focus, success, and reduced-motion states. Do not use colour alone to communicate correctness, mastery, severity, selection, or progress.
 - Inspect the running interface at relevant mobile, tablet, and desktop widths. Use Playwright for behavioral and responsive verification, and add stable visual snapshots for canonical screens when seeded content and rendering are deterministic.
 
-## Groq assistance discovery and boundary
+## Gemini assistance discovery and boundary
 
 ### Mandatory feature preflight
 
-- The presence of Groq configuration does not mean every feature should call Groq.
-- Before planning or editing any Groq-capable feature, agents must read the relevant Groq and feature sections of `docs/SOURCE_OF_TRUTH.md` and `docs/API_ROUTES.md`, then read `backend/modules/ai/router.py`, `backend/modules/ai/schemas.py`, and `backend/modules/shared/groq_adapter.py`.
+- The presence of Gemini configuration does not mean every feature should call Gemini.
+- Before planning or editing any Gemini-capable feature, agents must read the relevant Gemini and feature sections of `docs/SOURCE_OF_TRUTH.md` and `docs/API_ROUTES.md`, then read `backend/modules/ai/router.py`, `backend/modules/ai/schemas.py`, and `backend/modules/shared/gemini_adapter.py`.
 - Agents must then inspect the owning feature contracts under `backend/modules/<feature>/`, including its router, schemas, service, repository, and relevant tests when present.
-- In the first work update, state which required files were inspected and summarize the applicable deterministic/Groq boundary.
+- In the first work update, state which required files were inspected and summarize the applicable deterministic/Gemini boundary.
 - Do not plan or edit the integration until this preflight is complete. If a required source is missing or contradicts another source, stop and report the conflict instead of guessing.
 
 ### Usage rules
 
 - Use the existing `/api/v1/ai/*` contracts only for documented advisory work: learner-friendly feedback after deterministic grading, bounded incorrect-answer explanations, optional hint wording, teacher-facing incorrect-pattern analysis, advisory learner insights, and remediation suggestions.
-- Dashboards and progress views consume deterministic learner evidence by default. Do not add a Groq call merely to make a dashboard feel personalized; require a documented or explicit user-facing advisory purpose with a deterministic fallback.
-- Never use Groq to decide correctness, scores, mastery bands, growth, progression, learning-path order, unlocks, intervention triggers or severity, roles, permissions, or any other authoritative state.
-- Call Groq only through the server-side adapter and established backend endpoints. Never call it directly from browser code, accept a credential or model from a request, create a public Groq credential, or expose `.env` values.
+- Dashboards and progress views consume deterministic learner evidence by default. Do not add a Gemini call merely to make a dashboard feel personalized; require a documented or explicit user-facing advisory purpose with a deterministic fallback.
+- Never use Gemini to decide correctness, scores, mastery bands, growth, progression, learning-path order, unlocks, intervention triggers or severity, roles, permissions, or any other authoritative state.
+- Call Gemini only through the server-side adapter and established backend endpoints. Never call it directly from browser code, accept a credential or model from a request, create a public Gemini credential, or expose `.env` values.
 - Send the minimum evidence required, exclude secrets and unnecessary personally identifiable information, preserve adapter redaction, label generated output as advisory, and retain provider/model/time provenance where the contract supplies it.
-- Groq-disabled, timeout, rate-limit, invalid-response, and dependency-failure paths must fall back cleanly without blocking grading, progress updates, activity completion, or intervention recording. Automated tests must mock these paths and must not require a live paid Groq request.
+- Gemini-disabled, timeout, rate-limit, invalid-response, and dependency-failure paths must fall back cleanly without blocking grading, progress updates, activity completion, or intervention recording. Automated tests must mock these paths and must not require a live paid Gemini request.
 - If a documented AI experience is not yet wired into its owning feature, identify and coordinate the required cross-module contract instead of bypassing the AI module or inventing a client-only integration.
 
 ## Architecture and module ownership

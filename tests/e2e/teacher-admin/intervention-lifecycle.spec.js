@@ -343,7 +343,7 @@ describe("teacher interventions, end to end", () => {
 
     await expect(view.getByText(/^Suggested by AI/)).toBeVisible();
     // The configured model is a `.env` value and must never be on screen.
-    await expect(view.getByText(/gpt|llama|groq\//i)).toHaveCount(0);
+    await expect(view.getByText(/gpt|llama|gemini\//i)).toHaveCount(0);
 
     const after = await (
       await api(request, fixture.token, `/interventions/${fixture.id}`)
@@ -517,7 +517,7 @@ describe("teacher interventions, end to end", () => {
         contentType: "application/json",
         body: JSON.stringify({
           error: {
-            code: "groq_assistance_unavailable",
+            code: "gemini_assistance_unavailable",
             message: "AI assistance is not available",
             request_id: "test",
           },
@@ -575,7 +575,7 @@ describe("teacher interventions, end to end", () => {
         contentType: "application/json",
         body: JSON.stringify({
           error: {
-            code: "groq_assistance_unavailable",
+            code: "gemini_assistance_unavailable",
             message: "AI assistance is not available",
             request_id: "test",
           },

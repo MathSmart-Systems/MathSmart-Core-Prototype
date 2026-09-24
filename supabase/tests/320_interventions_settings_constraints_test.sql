@@ -1,7 +1,7 @@
 -- MathSmart Phase 4 — intervention lifecycle and settings-safety constraints.
 --
 -- Two things matter most here. An intervention must stay valid and advanceable
--- with no Groq output at all, and app.system_settings must reject anything that
+-- with no Gemini output at all, and app.system_settings must reject anything that
 -- looks like a deployment secret or a model selection.
 
 begin;
@@ -34,7 +34,7 @@ insert into app.competencies (competency_id, code, grade_id, domain, name, statu
    (select grade_id from app.grade_levels where level = 6), 'Number Sense', 'Case competency', 'published');
 
 -- ---------------------------------------------------------------------------
--- A case is complete without any Groq output
+-- A case is complete without any Gemini output
 -- ---------------------------------------------------------------------------
 insert into app.interventions
   (intervention_id, student_id, teacher_admin_id, competency_id,
@@ -59,7 +59,7 @@ select ok(
   (select ai_insight is null and ai_recommendation is null
      from app.interventions
     where interventions.intervention_id = '15000000-0000-4000-8000-000000000001'),
-  'A case is valid with no Groq insight and no Groq recommendation'
+  'A case is valid with no Gemini insight and no Gemini recommendation'
 );
 
 select is(
@@ -76,7 +76,7 @@ select is(
   'Deterministic evidence is retained on the case'
 );
 
--- The whole lifecycle runs with Groq absent.
+-- The whole lifecycle runs with Gemini absent.
 update app.interventions set status = 'In Progress'
 where interventions.intervention_id = '15000000-0000-4000-8000-000000000001';
 
@@ -84,7 +84,7 @@ select is(
   (select status from app.interventions
     where interventions.intervention_id = '15000000-0000-4000-8000-000000000001'),
   'In Progress'::app.intervention_status,
-  'A case advances to In Progress without any Groq output'
+  'A case advances to In Progress without any Gemini output'
 );
 
 update app.interventions set status = 'Resolved', resolved_at = now()
@@ -222,7 +222,7 @@ insert into app.system_settings (setting_key, setting_value, updated_by) values
   ('thresholds.activity_pass_percentage', '75'::jsonb, 'a5000000-0000-4000-8000-0000000000a1'),
   ('intervention.unsuccessful_attempt_trigger', '2'::jsonb, 'a5000000-0000-4000-8000-0000000000a1'),
   ('notifications.digest_enabled', 'true'::jsonb, 'a5000000-0000-4000-8000-0000000000a1'),
-  ('features.groq_feedback_enabled', 'false'::jsonb, 'a5000000-0000-4000-8000-0000000000a1');
+  ('features.gemini_advisory', 'false'::jsonb, 'a5000000-0000-4000-8000-0000000000a1');
 
 select is(
   (select setting_value::text from app.system_settings
@@ -233,9 +233,9 @@ select is(
 
 select is(
   (select setting_value::text from app.system_settings
-    where system_settings.setting_key = 'features.groq_feedback_enabled'),
+    where system_settings.setting_key = 'features.gemini_advisory'),
   'false'::text,
-  'A Groq feature flag is safe configuration'
+  'A Gemini feature flag is safe configuration'
 );
 
 select is(
@@ -278,16 +278,16 @@ select throws_ok(
 -- Secrets, by key.
 select throws_ok(
   $$ insert into app.system_settings (setting_key, setting_value, updated_by)
-     values ('features.groq_api_key', '"redacted"'::jsonb, 'a5000000-0000-4000-8000-0000000000a1') $$,
+     values ('features.gemini_api_key', '"redacted"'::jsonb, 'a5000000-0000-4000-8000-0000000000a1') $$,
   '23514', null::text,
   'A key that names an API credential is rejected'
 );
 
 select throws_ok(
   $$ insert into app.system_settings (setting_key, setting_value, updated_by)
-     values ('features.groq_model', '"some-model"'::jsonb, 'a5000000-0000-4000-8000-0000000000a1') $$,
+     values ('features.gemini_model', '"some-model"'::jsonb, 'a5000000-0000-4000-8000-0000000000a1') $$,
   '23514', null::text,
-  'The Groq model selection cannot be stored as a setting'
+  'The Gemini model selection cannot be stored as a setting'
 );
 
 select throws_ok(
@@ -314,9 +314,9 @@ select throws_ok(
 
 select throws_ok(
   $$ insert into app.system_settings (setting_key, setting_value, updated_by)
-     values ('features.integration', '{"groq_model":"some-model"}'::jsonb, 'a5000000-0000-4000-8000-0000000000a1') $$,
+     values ('features.integration', '{"gemini_model":"some-model"}'::jsonb, 'a5000000-0000-4000-8000-0000000000a1') $$,
   '23514', null::text,
-  'A value carrying the Groq model selection is rejected'
+  'A value carrying the Gemini model selection is rejected'
 );
 
 select throws_ok(
@@ -328,7 +328,7 @@ select throws_ok(
 
 select throws_ok(
   $$ update app.system_settings set setting_value = '{"password":"redacted"}'::jsonb
-     where system_settings.setting_key = 'features.groq_feedback_enabled' $$,
+     where system_settings.setting_key = 'features.gemini_advisory' $$,
   '23514', null::text,
   'A secret cannot be smuggled into an existing setting by update'
 );

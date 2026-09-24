@@ -89,7 +89,7 @@ set local role authenticated;
 select throws_ok(
   $$ select app.attach_intervention_advice(
        '1d000000-0000-4000-8000-000000000001',
-       'Let me write my own advice.', null, 'groq', 'a-model', null, null
+       'Let me write my own advice.', null, 'gemini', 'a-model', null, null
      ) $$,
   '42501',
   'Only a Teacher/Administrator may attach advisory text to an intervention',
@@ -116,7 +116,7 @@ select is(
      '1d000000-0000-4000-8000-000000000001',
      'A number line would make the regrouping step visible.',
      'Try one guided drill before the next activity.',
-     'groq', 'a-configured-model', 0.5,
+     'gemini', 'a-configured-model', 0.5,
      '{"gap": "She drops the decimal point.",
        "strategies": ["Use a number line first.", "Ask her to estimate."],
        "scaffold": "A place-value chart with the point in red.",
@@ -161,7 +161,7 @@ select is(
 select is(
   (select interventions.ai_provider || ' ' || interventions.ai_model from app.interventions
    where interventions.intervention_id = '1d000000-0000-4000-8000-000000000001'),
-  'groq a-configured-model',
+  'gemini a-configured-model',
   'Provenance is stored, so advisory text is never mistaken for an authored fact'
 );
 
@@ -222,7 +222,7 @@ select ok(
 -- ---------------------------------------------------------------------------
 select throws_ok(
   $$ select app.attach_intervention_advice(
-       '1d000000-0000-4000-8000-000000000001', '   ', null, 'groq', 'a-model', null, null
+       '1d000000-0000-4000-8000-000000000001', '   ', null, 'gemini', 'a-model', null, null
      ) $$,
   '23514',
   'Advisory text cannot be empty',
@@ -242,7 +242,7 @@ select is(
 select lives_ok(
   $$ select app.attach_intervention_advice(
        '1d000000-0000-4000-8000-000000000001',
-       'Second thoughts: start with place value.', null, 'groq', 'a-configured-model', null,
+       'Second thoughts: start with place value.', null, 'gemini', 'a-configured-model', null,
        '{"gap": "Place value first.", "strategies": []}'::jsonb
      ) $$,
   'A teacher may ask again and replace the previous suggestion'
@@ -320,7 +320,7 @@ select ok(
 
 select throws_ok(
   $$ select app.attach_intervention_advice(
-       '1d000000-0000-4000-8000-000000000001', 'Too late.', null, 'groq', 'a-model', null, null
+       '1d000000-0000-4000-8000-000000000001', 'Too late.', null, 'gemini', 'a-model', null, null
      ) $$,
   'P0002',
   'No such intervention',
@@ -336,7 +336,7 @@ select throws_ok(
 
 select throws_ok(
   $$ select app.attach_intervention_advice(
-       '1d000000-0000-4000-8000-0000000000ff', 'Nobody.', null, 'groq', 'a-model', null, null
+       '1d000000-0000-4000-8000-0000000000ff', 'Nobody.', null, 'gemini', 'a-model', null, null
      ) $$,
   'P0002',
   'No such intervention',

@@ -53,8 +53,8 @@ function Fact({ label, children }) {
  *
  * Deterministic evidence first and always: identity, enrollment, then the
  * numbers the learner's own work produced. The advisory note sits below them
- * and is allowed to be absent — a Groq outage costs this page nothing, because
- * nothing on it was waiting for Groq.
+ * and is allowed to be absent — a Gemini outage costs this page nothing, because
+ * nothing on it was waiting for Gemini.
  *
  * Recurring-mistake analysis is deliberately not here. It needs per-question
  * text alongside a wrong verdict, which nothing in the system records; asking

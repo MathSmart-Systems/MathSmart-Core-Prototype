@@ -16,7 +16,7 @@ email-validator==2.3.0
 asyncpg==0.31.0
 
 # Token verification against the project JWKS endpoint, and the Supabase Auth
-# Admin and Groq HTTP calls.
+# Admin and Gemini HTTP calls.
 PyJWT[crypto]==2.13.0
 cryptography==50.0.1
 httpx==0.28.1

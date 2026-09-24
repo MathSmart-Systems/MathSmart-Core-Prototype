@@ -62,10 +62,10 @@ const dbUrl = required("DB_URL");
 // `.env.local` only overrides what has to point somewhere else.
 const CARRY_OVER = [
   "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",
-  "GROQ_API_KEY",
-  "GROQ_MODEL",
-  "GROQ_ENABLED",
-  "GROQ_TIMEOUT_SECONDS",
+  "GEMINI_API_KEY",
+  "GEMINI_MODEL",
+  "GEMINI_ENABLED",
+  "GEMINI_TIMEOUT_SECONDS",
 ];
 
 const lines = [

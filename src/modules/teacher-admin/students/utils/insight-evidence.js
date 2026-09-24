@@ -63,7 +63,7 @@ export function weakestCompetency(progress) {
  * Builds the bounded, identity-free evidence for one competency.
  *
  * Returns null when there is nothing worth sending — no competency, or no
- * score on it — so the caller can stay quiet rather than ask Groq to comment
+ * score on it — so the caller can stay quiet rather than ask Gemini to comment
  * on an empty record.
  *
  * @param {object|null|undefined} progress - The deterministic progress payload
@@ -179,7 +179,7 @@ export function settleInsight(previous, result) {
 /**
  * What to tell a teacher when no advisory text arrived.
  *
- * Every Groq-side failure answers with the same 503, so this does not invent a
+ * Every Gemini-side failure answers with the same 503, so this does not invent a
  * distinction the API cannot make. A missing session or an unconfigured API is
  * a different thing and says so.
  *

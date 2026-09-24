@@ -10,7 +10,7 @@ against PostgreSQL in
 `supabase/tests/540_activity_attempt_functions_test.sql`.
 
 The advisory hint wording is proved here with a stand-in adapter. Nothing in
-this file reaches Groq: a live advisory request would be a paid call, and what
+this file reaches Gemini: a live advisory request would be a paid call, and what
 is worth proving is what a learner gets when that call is off, silent or
 broken, which no live call can demonstrate on demand.
 """
@@ -22,7 +22,7 @@ from uuid import UUID
 import asyncpg
 import pytest
 
-from modules.shared.groq_adapter import AdvisoryResult
+from modules.shared.gemini_adapter import AdvisoryResult
 from modules.shared.testing import (
     ADVISER_HEADERS,
     LEARNER_HEADERS,
@@ -121,9 +121,9 @@ SAVED_ROW = {"question_id": QUESTION, "answer": '"72"'}
 
 AUTHORED_HINT = "Check the signs before multiplying the magnitudes."
 
-# The statement `_is_groq_feature_enabled` runs to read the database feature
+# The statement `_is_gemini_feature_enabled` runs to read the database feature
 # flag, as a fragment the fake connection can key on.
-GROQ_FLAG = "app.groq_advisory_enabled()"
+GEMINI_FLAG = "app.gemini_advisory_enabled()"
 
 HISTORY_ROW = {
     **ATTEMPT_ROW,
@@ -139,7 +139,7 @@ HISTORY_ROW = {
 
 
 class FakeAdviser:
-    """The Groq adapter's contract without the network or the credential.
+    """The Gemini adapter's contract without the network or the credential.
 
     The real adapter answers with advice or with None, and never raises. Each
     of those is a case a learner can land in, so each is one a test can ask for
@@ -165,20 +165,20 @@ class FakeAdviser:
             return None
         return AdvisoryResult(
             text=self.text,
-            provider="groq",
+            provider="gemini",
             model="test-model",
             generated_at=datetime.now(UTC),
         )
 
 
-def with_groq(client, adviser: FakeAdviser):
+def with_gemini(client, adviser: FakeAdviser):
     """Turn the server-side half of the feature gate on for one client.
 
-    The database half is the connection's answer for `GROQ_FLAG`, which each
+    The database half is the connection's answer for `GEMINI_FLAG`, which each
     test supplies, so the two halves can be varied independently.
     """
-    client.app.state.settings.groq_enabled = True
-    client.app.state.groq = adviser
+    client.app.state.settings.gemini_enabled = True
+    client.app.state.ai = adviser
     return client
 
 
@@ -360,7 +360,7 @@ def test_an_answer_check_returns_the_verdict_and_the_authored_explanation():
     assert data["attempts_for_question"] == 1
     assert data["explanation"].startswith("Two negative factors")
     assert data["hint_available"] is True
-    # Groq is advisory and absent unless it answered.
+    # Gemini is advisory and absent unless it answered.
     assert data["ai_feedback"] is None
 
 
@@ -403,9 +403,9 @@ def test_a_question_with_no_authored_hint_says_so():
     assert response.json()["data"]["hint"] is None
 
 
-def test_an_enabled_groq_adds_wording_beside_the_authored_hint():
+def test_an_enabled_gemini_adds_wording_beside_the_authored_hint():
     adviser = FakeAdviser(text="Think about what two minus signs do together.")
-    client = with_groq(build_client(activity_connection(**{GROQ_FLAG: True})), adviser)
+    client = with_gemini(build_client(activity_connection(**{GEMINI_FLAG: True})), adviser)
 
     response = client.post(
         f"/api/v1/activity-attempts/{ATTEMPT}/hints",
@@ -428,10 +428,10 @@ def test_an_enabled_groq_adds_wording_beside_the_authored_hint():
 @pytest.mark.parametrize(
     "adviser",
     [FakeAdviser(silent=True), FakeAdviser(broken=True)],
-    ids=["groq_is_silent", "groq_raises"],
+    ids=["gemini_is_silent", "gemini_raises"],
 )
-def test_a_failed_groq_call_still_returns_the_authored_hint(adviser):
-    client = with_groq(build_client(activity_connection(**{GROQ_FLAG: True})), adviser)
+def test_a_failed_gemini_call_still_returns_the_authored_hint(adviser):
+    client = with_gemini(build_client(activity_connection(**{GEMINI_FLAG: True})), adviser)
 
     response = client.post(
         f"/api/v1/activity-attempts/{ATTEMPT}/hints",
@@ -448,7 +448,7 @@ def test_a_failed_groq_call_still_returns_the_authored_hint(adviser):
 def test_the_database_feature_flag_switches_the_advisory_wording_off():
     adviser = FakeAdviser(text="Advice nobody asked for.")
     # Server configuration says yes; the Teacher/Administrator flag says no.
-    client = with_groq(build_client(activity_connection(**{GROQ_FLAG: False})), adviser)
+    client = with_gemini(build_client(activity_connection(**{GEMINI_FLAG: False})), adviser)
 
     response = client.post(
         f"/api/v1/activity-attempts/{ATTEMPT}/hints",
@@ -462,8 +462,8 @@ def test_the_database_feature_flag_switches_the_advisory_wording_off():
 
 def test_a_question_with_no_authored_hint_is_never_given_a_generated_one():
     adviser = FakeAdviser(text="Here is a hint I invented.")
-    connection = activity_connection(**{"app.activity_hint": None, GROQ_FLAG: True})
-    client = with_groq(build_client(connection), adviser)
+    connection = activity_connection(**{"app.activity_hint": None, GEMINI_FLAG: True})
+    client = with_gemini(build_client(connection), adviser)
 
     response = client.post(
         f"/api/v1/activity-attempts/{ATTEMPT}/hints",
@@ -480,7 +480,7 @@ def test_a_question_with_no_authored_hint_is_never_given_a_generated_one():
 def test_no_activity_response_carries_an_answer_key():
     """Every response a learner can reach, including the advisory one."""
     adviser = FakeAdviser(text="Two negatives make a positive.")
-    client = with_groq(build_client(activity_connection(**{GROQ_FLAG: True})), adviser)
+    client = with_gemini(build_client(activity_connection(**{GEMINI_FLAG: True})), adviser)
 
     responses = [
         client.get(f"/api/v1/activities/{ACTIVITY}", headers=LEARNER_HEADERS),

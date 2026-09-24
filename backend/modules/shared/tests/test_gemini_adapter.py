@@ -1,7 +1,7 @@
-"""The Groq adapter is advisory, and everything about it is a failure path.
+"""The Gemini adapter is advisory, and everything about it is a failure path.
 
 Every test here asserts one of two things: the deterministic caller keeps
-working when Groq does not, or nothing sensitive leaves the process.
+working when Gemini does not, or nothing sensitive leaves the process.
 """
 
 from decimal import Decimal
@@ -11,7 +11,7 @@ import pytest
 from pydantic import SecretStr
 
 from app.config import Settings
-from modules.shared.groq_adapter import AdvisoryResult, GroqAdapter, redact_evidence
+from modules.shared.gemini_adapter import AdvisoryResult, GeminiAdapter, redact_evidence
 
 BASE = {
     "supabase_url": "https://example.supabase.co",
@@ -22,7 +22,7 @@ BASE = {
 }
 
 SUCCESS_BODY = {
-    "choices": [{"message": {"content": "Try grouping the terms before multiplying."}}],
+    "candidates": [{"content": {"parts": [{"text": "Try grouping the terms before multiplying."}]}}]
 }
 
 
@@ -31,33 +31,33 @@ def settings(**overrides) -> Settings:
 
 
 def enabled_settings(**overrides) -> Settings:
-    return settings(
-        groq_enabled=True,
-        groq_api_key=SecretStr("gsk_do_not_leak"),
-        groq_model="test-model",
-        **overrides,
-    )
+    defaults = {
+        "gemini_enabled": True,
+        "gemini_api_key": SecretStr("gsk_do_not_leak"),
+        "gemini_model": "test-model",
+    }
+    return settings(**{**defaults, **overrides})
 
 
 def client_for(handler) -> httpx.AsyncClient:
     return httpx.AsyncClient(transport=httpx.MockTransport(handler))
 
 
-async def test_disabled_groq_returns_no_advice_and_makes_no_call():
+async def test_disabled_gemini_returns_no_advice_and_makes_no_call():
     calls = []
 
     def handler(request):
         calls.append(request)
         return httpx.Response(200, json=SUCCESS_BODY)
 
-    adapter = GroqAdapter(settings(), client=client_for(handler))
+    adapter = GeminiAdapter(settings(), client=client_for(handler))
 
     assert await adapter.advise(purpose="student_feedback", evidence={"score": 40}) is None
     assert calls == []
 
 
-async def test_enabled_groq_returns_labelled_advice_with_provenance():
-    adapter = GroqAdapter(
+async def test_enabled_gemini_returns_labelled_advice_with_provenance():
+    adapter = GeminiAdapter(
         enabled_settings(), client=client_for(lambda r: httpx.Response(200, json=SUCCESS_BODY))
     )
 
@@ -65,7 +65,7 @@ async def test_enabled_groq_returns_labelled_advice_with_provenance():
 
     assert isinstance(result, AdvisoryResult)
     assert result.text == "Try grouping the terms before multiplying."
-    assert result.provider == "groq"
+    assert result.provider == "gemini"
     assert result.model == "test-model"
     assert result.generated_at is not None
 
@@ -74,7 +74,7 @@ async def test_a_timeout_yields_no_advice_rather_than_an_error():
     def handler(request):
         raise httpx.ReadTimeout("too slow", request=request)
 
-    adapter = GroqAdapter(enabled_settings(), client=client_for(handler))
+    adapter = GeminiAdapter(enabled_settings(), client=client_for(handler))
 
     assert await adapter.advise(purpose="student_feedback", evidence={}) is None
 
@@ -85,13 +85,13 @@ def _status_handler(status):
 
 @pytest.mark.parametrize("status", [400, 401, 429, 500, 503])
 async def test_an_unhappy_response_yields_no_advice(status):
-    adapter = GroqAdapter(enabled_settings(), client=client_for(_status_handler(status)))
+    adapter = GeminiAdapter(enabled_settings(), client=client_for(_status_handler(status)))
 
     assert await adapter.advise(purpose="student_feedback", evidence={}) is None
 
 
 async def test_a_malformed_body_yields_no_advice():
-    adapter = GroqAdapter(
+    adapter = GeminiAdapter(
         enabled_settings(), client=client_for(lambda r: httpx.Response(200, json={"unexpected": 1}))
     )
 
@@ -102,23 +102,25 @@ async def test_a_transport_failure_yields_no_advice():
     def handler(request):
         raise httpx.ConnectError("no route", request=request)
 
-    adapter = GroqAdapter(enabled_settings(), client=client_for(handler))
+    adapter = GeminiAdapter(enabled_settings(), client=client_for(handler))
 
     assert await adapter.advise(purpose="student_feedback", evidence={}) is None
 
 
-async def test_the_credential_is_sent_as_a_header_and_never_returned():
+async def test_the_credential_is_sent_in_header_and_never_returned():
     seen = {}
 
     def handler(request):
-        seen["authorization"] = request.headers.get("authorization")
+        seen["url"] = str(request.url)
+        seen["api_key"] = request.headers.get("x-goog-api-key")
         seen["body"] = request.content.decode()
         return httpx.Response(200, json=SUCCESS_BODY)
 
-    adapter = GroqAdapter(enabled_settings(), client=client_for(handler))
+    adapter = GeminiAdapter(enabled_settings(), client=client_for(handler))
     result = await adapter.advise(purpose="student_feedback", evidence={"score": 40})
 
-    assert seen["authorization"] == "Bearer gsk_do_not_leak"
+    assert seen["api_key"] == "gsk_do_not_leak"
+    assert "gsk_do_not_leak" not in seen["url"]
     assert "gsk_do_not_leak" not in seen["body"]
     assert "gsk_do_not_leak" not in repr(result)
     assert "gsk_do_not_leak" not in repr(adapter)
@@ -131,7 +133,7 @@ async def test_the_prompt_carries_no_identifying_or_secret_evidence():
         seen["body"] = request.content.decode()
         return httpx.Response(200, json=SUCCESS_BODY)
 
-    adapter = GroqAdapter(enabled_settings(), client=client_for(handler))
+    adapter = GeminiAdapter(enabled_settings(), client=client_for(handler))
     await adapter.advise(
         purpose="teacher_insight",
         evidence={
@@ -192,3 +194,26 @@ def test_redaction_leaves_a_list_of_scalars_alone():
     redacted = redact_evidence({"incorrect_patterns": ["subtracts first", "regroups twice"]})
 
     assert redacted == {"incorrect_patterns": ["subtracts first", "regroups twice"]}
+
+
+async def test_gemini_payload_structure_and_model_normalization():
+    seen = {}
+
+    def handler(request):
+        seen["url"] = str(request.url)
+        seen["body"] = request.content.decode()
+        return httpx.Response(200, json=SUCCESS_BODY)
+
+    adapter = GeminiAdapter(
+        enabled_settings(gemini_model="models/gemini-3.5-flash-lite"),
+        client=client_for(handler),
+    )
+    result = await adapter.advise(purpose="student_feedback", evidence={"score": 40})
+
+    assert result is not None
+    assert "/models/gemini-3.5-flash-lite:generateContent" in seen["url"]
+    assert "/models/models/" not in seen["url"]
+    import json
+    payload = json.loads(seen["body"])
+    assert "systemInstruction" in payload
+    assert payload["contents"][0]["role"] == "user"

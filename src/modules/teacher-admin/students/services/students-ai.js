@@ -10,10 +10,10 @@
  * The request carries no learner identity. The contract has no field for one,
  * and the server-side adapter drops any evidence key containing `name`,
  * `email`, `phone` or `key` before anything leaves the process — so a name
- * could not reach Groq even if this file tried to send one.
+ * could not reach Gemini even if this file tried to send one.
  *
- * Every Groq-side failure — disabled by policy, timed out, upstream error,
- * malformed reply — collapses to the same `503 groq_assistance_unavailable`.
+ * Every Gemini-side failure — disabled by policy, timed out, upstream error,
+ * malformed reply — collapses to the same `503 gemini_assistance_unavailable`.
  * The caller cannot tell them apart, so it must not pretend to.
  */
 
@@ -24,7 +24,7 @@ import { apiBaseUrlFrom, trimmedBaseUrl } from "../../../../lib/api/base-url.js"
 /** Matches the backend's own timeout, which is shorter than this one. */
 const REQUEST_TIMEOUT_MS = 15_000;
 
-/** The status the API uses for every Groq-side failure. */
+/** The status the API uses for every Gemini-side failure. */
 export const UNAVAILABLE_STATUS = 503;
 
 function apiBaseUrl() {

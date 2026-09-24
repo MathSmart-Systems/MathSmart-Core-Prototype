@@ -1,4 +1,4 @@
-"""Request and response contracts for the advisory Groq routes.
+"""Request and response contracts for the advisory Gemini routes.
 
 Every request model forbids extra fields, which is how a request that tries to
 name a model or carry a credential is rejected rather than ignored. The model

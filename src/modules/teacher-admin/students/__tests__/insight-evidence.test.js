@@ -184,7 +184,7 @@ describe("readInsight", () => {
 
   it("never reads the provider, the model or the time", () => {
     const note = readInsight(
-      reply({ ...NOTE, provider: "groq", model: "some-model", generated_at: "2026-09-20T08:00:00Z" }),
+      reply({ ...NOTE, provider: "gemini", model: "some-model", generated_at: "2026-09-20T08:00:00Z" }),
     );
 
     assert.deepEqual(Object.keys(note).sort(), ["actions", "evidence", "gap", "nextCheck"]);
@@ -217,7 +217,7 @@ describe("readInsight", () => {
   });
 
   it("reads nothing from a refusal", () => {
-    assert.equal(readInsight({ ok: false, status: 503, code: "groq_assistance_unavailable" }), null);
+    assert.equal(readInsight({ ok: false, status: 503, code: "gemini_assistance_unavailable" }), null);
     assert.equal(readInsight(null), null);
     assert.equal(readInsight(undefined), null);
     assert.equal(readInsight({ ok: true, data: null }), null);
@@ -226,7 +226,7 @@ describe("readInsight", () => {
 
 describe("settleInsight", () => {
   const ok = (gap) => ({ ok: true, status: 200, data: { insight_summary: gap } });
-  const refused = { ok: false, status: 503, code: "groq_assistance_unavailable" };
+  const refused = { ok: false, status: 503, code: "gemini_assistance_unavailable" };
   const previous = { insight: { gap: "The note on screen.", evidence: [], actions: [], nextCheck: null } };
 
   it("replaces the note when a new one arrives", () => {
@@ -280,7 +280,7 @@ describe("insightUnavailableReason", () => {
     const disabled = insightUnavailableReason({
       ok: false,
       status: 503,
-      code: "groq_assistance_unavailable",
+      code: "gemini_assistance_unavailable",
     });
     const unreachable = insightUnavailableReason({ ok: false, status: null, code: "unreachable" });
 

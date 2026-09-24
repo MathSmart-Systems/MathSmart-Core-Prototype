@@ -83,14 +83,19 @@ ASSESSMENT_ROUTES = {
 }
 
 ACTIVITY_ROUTES = {
+    "/activities": {"GET"},
     "/activities/{activity_id}": {"GET"},
     "/activities/{activity_id}/attempts": {"POST"},
     "/activity-attempts/{attempt_id}/submit": {"POST"},
+    "/activity-attempts/{attempt_id}/answer-checks": {"POST"},
+    "/activity-attempts/{attempt_id}/hints": {"POST"},
+    "/students/{student_id}/activity-attempts": {"GET"},
 }
 
 AI_ROUTES = {
     "/ai/pattern-analysis": {"POST"},
     "/ai/teacher-insight": {"POST"},
+    "/ai/remediation-support": {"POST"},
 }
 
 
@@ -98,7 +103,12 @@ def _teacher_admin_routes() -> dict[str, set[str]]:
     """Authoring used by bootstrap, plus the surviving UI directories."""
     allowed: dict[str, set[str]] = {
         "/teacher-admin/grades": {"GET"},
+        "/teacher-admin/grades/{grade_id}": {"GET", "PATCH", "DELETE"},
         "/teacher-admin/sections": {"GET", "POST"},
+        "/teacher-admin/sections/{section_id}": {"GET", "PATCH", "DELETE"},
+        "/teacher-admin/settings": {"GET", "PATCH"},
+        "/teacher-admin/audit-events": {"GET"},
+        "/teacher-admin/students/{student_id}/diagnostic-reset": {"POST"},
     }
     bootstrap_prefixes = (
         "/teacher-admin/competencies",
@@ -124,7 +134,7 @@ def create_app(
     elevated_database: Any | None = None,
     auth_admin: Any | None = None,
     storage_admin: Any | None = None,
-    groq: Any | None = None,
+    ai: Any | None = None,
 ) -> FastAPI:
     """Build the application.
 
@@ -180,7 +190,7 @@ def create_app(
     application.state.auth_admin = (
         auth_admin if auth_admin is not None else _default_auth_admin(resolved)
     )
-    application.state.groq = groq or _default_groq(resolved)
+    application.state.ai = ai or _default_gemini(resolved)
 
     # Added first, so it ends up innermost: inside RequestIdMiddleware, which
     # gives it the request id, and inside CORSMiddleware, which is what lets a
@@ -260,10 +270,10 @@ def _default_storage_admin(settings: Settings) -> Any:
     return SupabaseStorageAdmin(settings)
 
 
-def _default_groq(settings: Settings) -> Any:
-    from modules.shared.groq_adapter import GroqAdapter
+def _default_gemini(settings: Settings) -> Any:
+    from modules.shared.gemini_adapter import GeminiAdapter
 
-    return GroqAdapter(settings)
+    return GeminiAdapter(settings)
 
 
 app = create_app  # `uvicorn app.main:app --factory`

@@ -37,7 +37,7 @@ def _load():
 def entrypoint(monkeypatch):
     for key, value in ENVIRONMENT.items():
         monkeypatch.setenv(key, value)
-    for key in ("GROQ_ENABLED", "GROQ_API_KEY", "GROQ_MODEL"):
+    for key in ("GEMINI_ENABLED", "GEMINI_API_KEY", "GEMINI_MODEL"):
         monkeypatch.delenv(key, raising=False)
     get_settings.cache_clear()
     yield _load()
