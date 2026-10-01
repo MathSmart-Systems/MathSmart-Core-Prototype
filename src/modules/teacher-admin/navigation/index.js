@@ -1,4 +1,4 @@
-import { TriangleAlert, Users } from "lucide-react";
+import { SlidersHorizontal, TriangleAlert, Users } from "lucide-react";
 
 import { ROLES } from "@/lib/auth/roles";
 
@@ -17,5 +17,6 @@ export const TEACHER_ADMIN_NAV = Object.freeze([Object.freeze({
   items: Object.freeze([
     { href: "/teacher/students", label: "Students", icon: Users },
     { href: "/teacher/interventions", label: "Interventions", icon: TriangleAlert },
+    { href: "/teacher/settings", label: "Settings", icon: SlidersHorizontal },
   ]),
 })]);
