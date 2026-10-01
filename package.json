@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently --kill-others-on-fail --names web,api --prefix-colors cyan,magenta \"npm run dev:web\" \"npm run dev:api\"",
+    "neust": "npm run dev",
     "dev:web": "next dev",
     "dev:api": "node scripts/dev-api.mjs",
     "build": "next build",
