@@ -9,6 +9,7 @@ const retainedRoutes = [
   "src/app/(teacher-admin)/teacher/students/[studentId]/page.jsx",
   "src/app/(teacher-admin)/teacher/interventions/page.jsx",
   "src/app/(teacher-admin)/teacher/interventions/[interventionId]/page.jsx",
+  "src/app/(teacher-admin)/teacher/settings/page.jsx",
 ];
 
 const removedRoutes = [
@@ -21,7 +22,6 @@ const removedRoutes = [
   "src/app/(teacher-admin)/teacher/question-bank",
   "src/app/(teacher-admin)/teacher/grades-sections",
   "src/app/(teacher-admin)/teacher/reports-analytics",
-  "src/app/(teacher-admin)/teacher/settings",
 ];
 
 test("only the retained teacher workspace routes remain", () => {
