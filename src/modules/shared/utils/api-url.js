@@ -9,8 +9,8 @@ const LOCAL_DEVELOPMENT_HOSTS = new Set(["localhost", "127.0.0.1"]);
  * Accepted:
  * - the relative same-origin path `/api/v1`, which the browser resolves
  *   against the page it is on;
- * - HTTPS to an approved host, or to the current Vercel deployment's own host
- *   (`VERCEL_URL`, set by Vercel, never taken from a request);
+ * - HTTPS to an approved host or the platform-provided Vercel hostname for
+ *   the current environment;
  * - HTTP to localhost or 127.0.0.1 for local development.
  *
  * Any other host is refused, HTTPS or not.

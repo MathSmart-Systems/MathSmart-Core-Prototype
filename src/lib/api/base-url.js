@@ -9,9 +9,9 @@
  *
  * - In the browser that is simply the relative path `/api/v1`: same origin,
  *   no CORS, no second domain.
- * - On the server a relative path is not a URL, so the address is built from
- *   `VERCEL_URL`, the host Vercel sets for the current deployment. It is never
- *   built from a request's Host header, which a caller controls.
+ * - On the server, use Vercel's public project hostname in Production so
+ *   reads can reach the API through Deployment Protection's public alias.
+ *   Preview uses the deployment's own hostname. Both are platform settings.
  * - With neither, the answer is `null`, and each service reports "not
  *   configured" rather than guessing an address.
  */
@@ -22,13 +22,19 @@ export const SAME_ORIGIN_API_PATH = "/api/v1";
 const HOSTNAME = /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 
 /**
- * The current Vercel deployment's host, when it is running on Vercel and the
+ * The Vercel hostname for the current environment, when it is running on Vercel and the
  * value is a plain hostname. Read on the server only; the browser never has it.
  *
  * @returns {string|null}
  */
 export function trustedDeploymentHost() {
-  const host = typeof process !== "undefined" ? process.env.VERCEL_URL : undefined;
+  if (typeof process === "undefined") return null;
+  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (process.env.VERCEL_ENV === "production" && productionHost && HOSTNAME.test(productionHost)) {
+    return productionHost.toLowerCase();
+  }
+
+  const host = process.env.VERCEL_URL;
   return typeof host === "string" && HOSTNAME.test(host) ? host.toLowerCase() : null;
 }
 
