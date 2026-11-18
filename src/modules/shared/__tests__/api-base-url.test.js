@@ -3,11 +3,11 @@
  *
  * Locally the configured address is used and validated as before. On Vercel
  * nothing is configured: the browser uses the same-origin path, and the server
- * uses the deployment's own `VERCEL_URL`, never an address a request supplies.
+ * uses the platform's Production alias or deployment hostname.
  */
 
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 
 import {
   SAME_ORIGIN_API_PATH,
@@ -20,6 +20,10 @@ import { secureApiBaseUrl } from "../utils/api-url.js";
 
 const vercelKeys = ["VERCEL_URL", "VERCEL_ENV", "VERCEL_PROJECT_PRODUCTION_URL"];
 const originalVercelEnv = Object.fromEntries(vercelKeys.map((key) => [key, process.env[key]]));
+
+beforeEach(() => {
+  for (const key of vercelKeys) delete process.env[key];
+});
 
 afterEach(() => {
   for (const key of vercelKeys) {
@@ -52,6 +56,7 @@ describe("the API address", () => {
     process.env.VERCEL_ENV = "production";
     assert.equal(sameOriginApiBaseUrl(), "https://mathsmart.vercel.app/api/v1");
     assert.equal(secureApiBaseUrl("https://mathsmart.vercel.app/api/v1"), "https://mathsmart.vercel.app/api/v1");
+    assert.equal(secureApiBaseUrl("https://mathsmart-abc.vercel.app/api/v1"), "https://mathsmart-abc.vercel.app/api/v1");
 
     process.env.VERCEL_ENV = "preview";
     assert.equal(sameOriginApiBaseUrl(), "https://mathsmart-abc.vercel.app/api/v1");

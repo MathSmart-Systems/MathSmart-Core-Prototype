@@ -46,7 +46,8 @@ export async function GET(request) {
 
   const { data, error: claimsError } = await supabase.auth.getClaims();
   if (claimsError || parseTrustedRole(data?.claims) !== ROLES.TEACHER_ADMIN) {
-    await supabase.auth.signOut({ scope: "local" });
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+    if (signOutError) console.warn("Could not revoke the rejected MathSmart demo session.");
     return sessionError("The MathSmart demo account cannot open the Teacher/Administrator workspace.", 403);
   }
 

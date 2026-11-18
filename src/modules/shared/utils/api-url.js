@@ -1,4 +1,8 @@
-import { SAME_ORIGIN_API_PATH, trustedDeploymentHost } from "../../../lib/api/base-url.js";
+import {
+  SAME_ORIGIN_API_PATH,
+  trustedDeploymentHost,
+  trustedProductionHost,
+} from "../../../lib/api/base-url.js";
 
 const APPROVED_API_HOSTS = new Set(["api.mathsmart.test"]);
 const LOCAL_DEVELOPMENT_HOSTS = new Set(["localhost", "127.0.0.1"]);
@@ -9,8 +13,8 @@ const LOCAL_DEVELOPMENT_HOSTS = new Set(["localhost", "127.0.0.1"]);
  * Accepted:
  * - the relative same-origin path `/api/v1`, which the browser resolves
  *   against the page it is on;
- * - HTTPS to an approved host or the platform-provided Vercel hostname for
- *   the current environment;
+ * - HTTPS to an approved host, the current Vercel deployment, or its public
+ *   project hostname in Production;
  * - HTTP to localhost or 127.0.0.1 for local development.
  *
  * Any other host is refused, HTTPS or not.
@@ -26,10 +30,11 @@ export function secureApiBaseUrl(value) {
 
   try {
     const url = new URL(value);
-    const deploymentHost = trustedDeploymentHost();
     const isSecure =
       url.protocol === "https:" &&
-      (APPROVED_API_HOSTS.has(url.hostname) || (deploymentHost !== null && url.host === deploymentHost));
+      (APPROVED_API_HOSTS.has(url.hostname) ||
+        url.host === trustedDeploymentHost() ||
+        url.host === trustedProductionHost());
     const isLocalDevelopment =
       url.protocol === "http:" && LOCAL_DEVELOPMENT_HOSTS.has(url.hostname);
 
