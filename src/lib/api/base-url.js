@@ -9,9 +9,9 @@
  *
  * - In the browser that is simply the relative path `/api/v1`: same origin,
  *   no CORS, no second domain.
- * - On the server a relative path is not a URL, so the address is built from
- *   `VERCEL_URL`, the host Vercel sets for the current deployment. It is never
- *   built from a request's Host header, which a caller controls.
+ * - On the server, use Vercel's public project hostname in Production so
+ *   reads can reach the API through Deployment Protection's public alias.
+ *   Preview uses the deployment's own hostname. Both are platform settings.
  * - With neither, the answer is `null`, and each service reports "not
  *   configured" rather than guessing an address.
  */
@@ -21,14 +21,16 @@ export const SAME_ORIGIN_API_PATH = "/api/v1";
 /** A bare DNS hostname: labels of letters, digits and hyphens. No port, path or scheme. */
 const HOSTNAME = /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 
-/**
- * The current Vercel deployment's host, when it is running on Vercel and the
- * value is a plain hostname. Read on the server only; the browser never has it.
- *
- * @returns {string|null}
- */
+/** Vercel's generated hostname for the current deployment. */
 export function trustedDeploymentHost() {
   const host = typeof process !== "undefined" ? process.env.VERCEL_URL : undefined;
+  return typeof host === "string" && HOSTNAME.test(host) ? host.toLowerCase() : null;
+}
+
+/** Vercel's public project hostname when running in Production. */
+export function trustedProductionHost() {
+  if (typeof process === "undefined" || process.env.VERCEL_ENV !== "production") return null;
+  const host = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   return typeof host === "string" && HOSTNAME.test(host) ? host.toLowerCase() : null;
 }
 
@@ -39,7 +41,7 @@ export function trustedDeploymentHost() {
  */
 export function sameOriginApiBaseUrl() {
   if (typeof window !== "undefined") return SAME_ORIGIN_API_PATH;
-  const host = trustedDeploymentHost();
+  const host = trustedProductionHost() ?? trustedDeploymentHost();
   return host ? `https://${host}${SAME_ORIGIN_API_PATH}` : null;
 }
 

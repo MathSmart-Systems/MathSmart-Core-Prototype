@@ -2,22 +2,37 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
 import { parseTrustedRole, ROLES } from "@/lib/auth/roles";
-import { localTeacherCredentials } from "@/lib/auth/local-session";
+import { teacherSessionCredentials } from "@/lib/auth/local-session";
 import { getSupabaseConfig, isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
 function destinationFor(request) {
   const next = request.nextUrl.searchParams.get("next");
-  return next?.startsWith("/teacher/") ? next : "/teacher/students";
+  const fallback = new URL("/teacher/students", request.url);
+  if (!next?.startsWith("/teacher/")) return fallback;
+
+  const destination = new URL(next, request.url);
+  return destination.origin === fallback.origin && destination.pathname.startsWith("/teacher/")
+    ? destination
+    : fallback;
 }
 
-/** Creates an ordinary Supabase cookie session only for the approved local stack. */
-export async function GET(request) {
-  const credentials = localTeacherCredentials();
-  if (!credentials || !isSupabaseConfigured()) return new NextResponse(null, { status: 404 });
+function sessionError(message, status) {
+  return new NextResponse(message, {
+    status,
+    headers: { "Cache-Control": "private, no-store" },
+  });
+}
 
-  const response = NextResponse.redirect(new URL(destinationFor(request), request.url));
+/** Creates a Supabase session for the approved local stack or hosted demo. */
+export async function GET(request) {
+  const credentials = teacherSessionCredentials();
+  if (!credentials || !isSupabaseConfigured()) {
+    return sessionError("The MathSmart demo account is not configured.", 503);
+  }
+
+  const response = NextResponse.redirect(destinationFor(request));
   const { url, publicKey } = getSupabaseConfig();
   const supabase = createServerClient(url, publicKey, {
     cookies: {
@@ -27,12 +42,13 @@ export async function GET(request) {
   });
 
   const { error } = await supabase.auth.signInWithPassword(credentials);
-  if (error) return new NextResponse(null, { status: 503 });
+  if (error) return sessionError("The MathSmart demo could not sign in. Try again shortly.", 503);
 
   const { data, error: claimsError } = await supabase.auth.getClaims();
   if (claimsError || parseTrustedRole(data?.claims) !== ROLES.TEACHER_ADMIN) {
-    await supabase.auth.signOut({ scope: "local" });
-    return new NextResponse(null, { status: 403 });
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+    if (signOutError) console.warn("Could not revoke the rejected MathSmart demo session.");
+    return sessionError("The MathSmart demo account cannot open the Teacher/Administrator workspace.", 403);
   }
 
   response.headers.set("Cache-Control", "private, no-store");

@@ -1,10 +1,9 @@
 /**
  * Server start-up for the Vercel deployment.
  *
- * On Vercel, server-rendered pages read the API from the current deployment's
- * own URL (`https://${VERCEL_URL}/api/v1`; see `src/lib/api/base-url.js`).
- * When Vercel Deployment Protection covers that URL, those server-to-self
- * requests are stopped at Vercel's edge like any unauthenticated visitor.
+ * When server-rendered pages call their own generated deployment URL
+ * (`https://${VERCEL_URL}/api/v1`), Vercel Deployment Protection can require
+ * authentication before forwarding the request to the API.
  *
  * If the project has "Protection Bypass for Automation" enabled, Vercel
  * exposes its secret to the server as `VERCEL_AUTOMATION_BYPASS_SECRET`. This

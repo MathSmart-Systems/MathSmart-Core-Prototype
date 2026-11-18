@@ -12,10 +12,31 @@ export function isApprovedLocalSupabaseUrl(value) {
   }
 }
 
+function credentialPair(email, password) {
+  const trimmedEmail = String(email ?? "").trim();
+  const configuredPassword = String(password ?? "");
+  return trimmedEmail && configuredPassword
+    ? { email: trimmedEmail, password: configuredPassword }
+    : null;
+}
+
 export function localTeacherCredentials(env = process.env) {
   if (!isApprovedLocalSupabaseUrl(env.NEXT_PUBLIC_SUPABASE_URL)) return null;
 
-  const email = String(env.LOCAL_TEACHER_ADMIN_EMAIL ?? "").trim();
-  const password = String(env.LOCAL_TEACHER_ADMIN_PASSWORD ?? "");
-  return email && password ? { email, password } : null;
+  return credentialPair(env.LOCAL_TEACHER_ADMIN_EMAIL, env.LOCAL_TEACHER_ADMIN_PASSWORD);
+}
+
+export function teacherSessionCredentials(env = process.env) {
+  if (isApprovedLocalSupabaseUrl(env.NEXT_PUBLIC_SUPABASE_URL)) {
+    return localTeacherCredentials(env);
+  }
+
+  const projectRef = env.DEMO_SUPABASE_PROJECT_REF;
+  const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  if (!/^[a-z0-9]{20}$/.test(projectRef ?? "") ||
+      supabaseUrl !== `https://${projectRef}.supabase.co`) {
+    return null;
+  }
+
+  return credentialPair(env.DEMO_TEACHER_ADMIN_EMAIL, env.DEMO_TEACHER_ADMIN_PASSWORD);
 }

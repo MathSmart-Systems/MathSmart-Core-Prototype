@@ -3,11 +3,11 @@
  *
  * Locally the configured address is used and validated as before. On Vercel
  * nothing is configured: the browser uses the same-origin path, and the server
- * uses the deployment's own `VERCEL_URL`, never an address a request supplies.
+ * uses the platform's Production alias or deployment hostname.
  */
 
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 
 import {
   SAME_ORIGIN_API_PATH,
@@ -18,11 +18,18 @@ import {
 } from "../../../lib/api/base-url.js";
 import { secureApiBaseUrl } from "../utils/api-url.js";
 
-const ORIGINAL_VERCEL_URL = process.env.VERCEL_URL;
+const vercelKeys = ["VERCEL_URL", "VERCEL_ENV", "VERCEL_PROJECT_PRODUCTION_URL"];
+const originalVercelEnv = Object.fromEntries(vercelKeys.map((key) => [key, process.env[key]]));
+
+beforeEach(() => {
+  for (const key of vercelKeys) delete process.env[key];
+});
 
 afterEach(() => {
-  if (ORIGINAL_VERCEL_URL === undefined) delete process.env.VERCEL_URL;
-  else process.env.VERCEL_URL = ORIGINAL_VERCEL_URL;
+  for (const key of vercelKeys) {
+    if (originalVercelEnv[key] === undefined) delete process.env[key];
+    else process.env[key] = originalVercelEnv[key];
+  }
   delete globalThis.window;
 });
 
@@ -41,6 +48,22 @@ describe("the API address", () => {
   it("on the server, is the current deployment and nothing else", () => {
     process.env.VERCEL_URL = "mathsmart-git-main-team.vercel.app";
     assert.equal(sameOriginApiBaseUrl(), "https://mathsmart-git-main-team.vercel.app/api/v1");
+  });
+
+  it("uses the public production hostname for server reads and keeps previews on their own host", () => {
+    process.env.VERCEL_URL = "mathsmart-abc.vercel.app";
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "mathsmart.vercel.app";
+    process.env.VERCEL_ENV = "production";
+    assert.equal(sameOriginApiBaseUrl(), "https://mathsmart.vercel.app/api/v1");
+    assert.equal(secureApiBaseUrl("https://mathsmart.vercel.app/api/v1"), "https://mathsmart.vercel.app/api/v1");
+    assert.equal(secureApiBaseUrl("https://mathsmart-abc.vercel.app/api/v1"), "https://mathsmart-abc.vercel.app/api/v1");
+
+    process.env.VERCEL_ENV = "preview";
+    assert.equal(sameOriginApiBaseUrl(), "https://mathsmart-abc.vercel.app/api/v1");
+
+    process.env.VERCEL_ENV = "production";
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "mathsmart.vercel.app/path";
+    assert.equal(sameOriginApiBaseUrl(), "https://mathsmart-abc.vercel.app/api/v1");
   });
 
   it("fails safe when there is no trusted deployment host", () => {
