@@ -416,6 +416,8 @@ describe("teacher interventions, end to end", () => {
 
     const take = view.getByRole("button", { name: /^Use this in my notes: / }).first();
     await take.click();
+    await expect(notes).toBeFocused();
+    await expect(notes).toBeInViewport();
 
     const draft = await notes.inputValue();
     // Appended, not replaced: taking a second idea must not discard the first,
@@ -447,6 +449,8 @@ describe("teacher interventions, end to end", () => {
     const before = await notes.inputValue();
 
     await view.getByRole("button", { name: "Use in notes" }).click();
+    await expect(notes).toBeFocused();
+    await expect(notes).toBeInViewport();
 
     const draft = await notes.inputValue();
     expect(draft).not.toBe(before);

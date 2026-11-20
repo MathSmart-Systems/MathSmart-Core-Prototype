@@ -134,6 +134,7 @@ export function InterventionCaseView({ caseDetail: initialDetail, filters, at = 
 
   const useSuggestionAsNote = useCallback(() => {
     setNoteDraft(suggestionNoteDraft(caseDetail));
+    recordRef.current?.querySelector("textarea")?.focus();
   }, [caseDetail]);
 
   /**
@@ -146,6 +147,7 @@ export function InterventionCaseView({ caseDetail: initialDetail, filters, at = 
   const takeSuggestionLine = useCallback((line) => {
     if (!line) return;
     setNoteDraft((current) => (current ? `${current.trimEnd()} ${line}` : line).slice(0, 4000));
+    recordRef.current?.querySelector("textarea")?.focus();
   }, []);
 
   const caseId = caseDetail?.id ?? null;
