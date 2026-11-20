@@ -95,7 +95,9 @@ function EnrollStudentFields({ grade, sections, onCancel, onSubmit, busy, error 
             autoComplete="email"
             required
           />
-          <p className="mt-1 text-xs text-muted-foreground">The learner signs in with this address.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Use an email the learner can open. After enrollment, they can choose “Set or reset your password” on the sign-in page.
+          </p>
         </div>
 
         <div>

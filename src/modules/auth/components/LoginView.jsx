@@ -1,10 +1,11 @@
 import { Info, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 
-import { Wordmark } from "@/modules/shared";
-
-import { GapPlot } from "./GapPlot";
+import { Button } from "@/components/ui/button";
 
 import { messageForNotice } from "../messages";
+import { PASSWORD_SETUP_PATH } from "../password-setup";
+import { AuthLayout } from "./AuthLayout";
 import { LoginForm } from "./LoginForm";
 
 function Notice({ notice }) {
@@ -32,49 +33,17 @@ function Notice({ notice }) {
   );
 }
 
-/**
- * Login screen. The form sits on the left third of the grid; the graph-paper
- * panel on the right carries the MathSmart signature and is hidden on narrow
- * screens, where it would only compete with the form.
- */
 export function LoginView({ notice, isConfigured }) {
   return (
-    <div className="grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
-      <div className="grid-paper-light flex items-center justify-center px-5 py-12 sm:px-8">
-        <div className="w-full max-w-[26rem]">
-          <Wordmark className="text-foreground" markClassName="text-primary" />
-
-          <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight text-foreground">
-            Sign in
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            MathSmart supports Grade 6 mathematics for learners and their
-            teachers. Use the account your school gave you.
-          </p>
-
-          <div className="mt-8 flex flex-col gap-5">
-            <Notice notice={notice} />
-            <LoginForm isConfigured={isConfigured} />
-          </div>
-        </div>
-      </div>
-
-      <div
-        aria-hidden="true"
-        data-testid="login-panel"
-        className="on-shell relative hidden bg-shell lg:block"
-      >
-        {/*
-          One axis pair with a single plotted point: the MathSmart mark at page
-          scale. GapPlot adds the second point — where the pointer is — and the
-          gap between them, and anchors the tagline to the goal.
-        */}
-        <GapPlot>
-          <p className="mt-6 max-w-[15rem] pl-5 font-display text-2xl leading-snug font-medium text-white">
-            Plot the gap. Close the gap.
-          </p>
-        </GapPlot>
-      </div>
-    </div>
+    <AuthLayout
+      title="Sign in"
+      description="MathSmart supports Grade 6 mathematics for learners and their teachers. Use the account your school gave you."
+    >
+      <Notice notice={notice} />
+      <LoginForm isConfigured={isConfigured} />
+      <Button asChild variant="link" className="self-start px-0">
+        <Link href={PASSWORD_SETUP_PATH}>Set or reset your password</Link>
+      </Button>
+    </AuthLayout>
   );
 }
