@@ -22,6 +22,10 @@ const NOTICE_MESSAGES = Object.freeze({
     tone: "info",
     text: "You are signed out.",
   },
+  [AUTH_NOTICE.PASSWORD_SET]: {
+    tone: "info",
+    text: "Your password is saved. Sign in with your new password.",
+  },
   [AUTH_NOTICE.SESSION_EXPIRED]: {
     tone: "info",
     text: "Your session ended. Sign in to continue.",

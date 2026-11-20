@@ -7,3 +7,5 @@
  */
 export { getVerifiedSession, requireWorkspace } from "./services/session";
 export { LoginView } from "./components/LoginView";
+export { PasswordSetup } from "./components/PasswordSetup";
+export { confirmPasswordLink } from "./services/password-confirm";

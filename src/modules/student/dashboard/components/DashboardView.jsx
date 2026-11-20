@@ -25,7 +25,7 @@ export function DashboardView({ model }) {
             {model.competencies.length ? (
               <CompetencyProgressList competencies={model.competencies} />
             ) : (
-              <EmptyNote>Your topic scores will appear here after your first assessment is marked.</EmptyNote>
+              <EmptyNote>No scores yet. Your topic scores will appear here after your first assessment is marked.</EmptyNote>
             )}
           </Section>
         </div>

@@ -5,6 +5,7 @@
  */
 export const AUTH_NOTICE = Object.freeze({
   SIGNED_OUT: "signed-out",
+  PASSWORD_SET: "password-set",
   NO_WORKSPACE: "no-workspace",
   SESSION_EXPIRED: "session-expired",
   UNAUTHORIZED: "unauthorized",
