@@ -7,6 +7,7 @@
  * and it never decides severity, status, or queue membership — the API does.
  */
 
+import { fetchServerApi } from "@/lib/api/server-fetch";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { secureApiBaseUrl } from "@/modules/shared/utils/api-url";
@@ -35,7 +36,7 @@ async function accessToken() {
 async function readFromApi(path, token, base) {
   let response;
   try {
-    response = await fetch(`${base}${path}`, {
+    response = await fetchServerApi(`${base}${path}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

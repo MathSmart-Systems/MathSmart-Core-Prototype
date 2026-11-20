@@ -98,3 +98,29 @@ describe("secureApiBaseUrl", () => {
     assert.equal(secureApiBaseUrl("http://localhost:8000/api/v1"), "http://localhost:8000/api/v1");
   });
 });
+
+
+it("scopes the Vercel request identity to the current preview API and refuses redirects", async () => {
+  const { previewApiRequestOptions } = await import("../../../lib/api/base-url.js");
+  process.env.VERCEL_URL = "mathsmart-preview.vercel.app";
+  process.env.VERCEL_ENV = "preview";
+  const options = { headers: { Authorization: "Bearer learner-fixture" }, cache: "no-store" };
+  const url = "https://mathsmart-preview.vercel.app/api/v1/students/me";
+  const token = "oidc-fixture";
+  const trusted = previewApiRequestOptions(url, options, token);
+
+  assert.equal(trusted.headers.get("x-vercel-trusted-oidc-idp-token"), token);
+  assert.equal(trusted.headers.get("authorization"), "Bearer learner-fixture");
+  assert.equal(trusted.redirect, "error");
+  for (const unsafe of [
+    "https://elsewhere.vercel.app/api/v1/students/me",
+    "https://mathsmart-preview.vercel.app.evil.test/api/v1/students/me",
+    "https://mathsmart-preview.vercel.app/api/v1/../../login",
+    "http://mathsmart-preview.vercel.app/api/v1/students/me",
+  ]) {
+    assert.equal(previewApiRequestOptions(unsafe, options, token), options);
+  }
+  assert.equal(previewApiRequestOptions(url, options, null), options);
+  process.env.VERCEL_ENV = "production";
+  assert.equal(previewApiRequestOptions(url, options, token), options);
+});

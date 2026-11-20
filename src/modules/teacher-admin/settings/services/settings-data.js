@@ -7,6 +7,7 @@
  * credential and no editable model.
  */
 
+import { fetchServerApi } from "@/lib/api/server-fetch";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -44,7 +45,7 @@ export async function readSettingsData() {
 
   let response;
   try {
-    response = await fetch(`${base}/teacher-admin/settings`, {
+    response = await fetchServerApi(`${base}/teacher-admin/settings`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

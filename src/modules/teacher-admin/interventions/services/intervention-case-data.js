@@ -12,6 +12,7 @@
  * anything is painted and the first thing on screen is the case itself.
  */
 
+import { fetchServerApi } from "@/lib/api/server-fetch";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { secureApiBaseUrl } from "@/modules/shared/utils/api-url";
@@ -55,7 +56,7 @@ export async function readInterventionCase(interventionId) {
 
   let response;
   try {
-    response = await fetch(`${base}/interventions/${interventionId}`, {
+    response = await fetchServerApi(`${base}/interventions/${interventionId}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

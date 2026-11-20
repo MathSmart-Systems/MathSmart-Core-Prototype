@@ -14,6 +14,7 @@
  * and again by the database, exactly as `getVerifiedSession` documents.
  */
 
+import { fetchServerApi } from "@/lib/api/server-fetch";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -56,7 +57,7 @@ async function readFromApi(path, token, base) {
   let response;
 
   try {
-    response = await fetch(`${base}${path}`, {
+    response = await fetchServerApi(`${base}${path}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

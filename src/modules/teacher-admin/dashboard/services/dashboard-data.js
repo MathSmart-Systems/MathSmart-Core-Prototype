@@ -3,6 +3,7 @@
  * Runs exclusively on the server with next/headers session cookies.
  */
 
+import { fetchServerApi } from "@/lib/api/server-fetch";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -36,7 +37,7 @@ async function readFromApi(path, token, base) {
   for (let attempt = 0; attempt < MAX_READ_ATTEMPTS; attempt += 1) {
     let response;
     try {
-      response = await fetch(`${base}${path}`, {
+      response = await fetchServerApi(`${base}${path}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",

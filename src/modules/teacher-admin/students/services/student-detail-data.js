@@ -11,6 +11,7 @@
  * exist with no progress recorded yet, and that page is still worth showing.
  */
 
+import { fetchServerApi } from "@/lib/api/server-fetch";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { apiBaseUrlFrom, trimmedBaseUrl } from "../../../../lib/api/base-url.js";
@@ -45,7 +46,7 @@ async function accessToken() {
 async function readFromApi(path, token, base) {
   let response;
   try {
-    response = await fetch(`${base}${path}`, {
+    response = await fetchServerApi(`${base}${path}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
