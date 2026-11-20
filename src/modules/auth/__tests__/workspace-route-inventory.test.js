@@ -5,6 +5,7 @@ import test from "node:test";
 import { ROLES, homePathForRole, workspaceForPath } from "../../../lib/auth/roles.js";
 
 const retainedRoutes = [
+  "src/app/(teacher-admin)/teacher/dashboard/page.jsx",
   "src/app/(student)/student/dashboard/page.jsx",
   "src/app/(teacher-admin)/teacher/students/page.jsx",
   "src/app/(teacher-admin)/teacher/students/[studentId]/page.jsx",
@@ -14,7 +15,6 @@ const retainedRoutes = [
 ];
 
 const removedRoutes = [
-  "src/app/(teacher-admin)/teacher/dashboard",
   "src/app/(teacher-admin)/teacher/assessments",
   "src/app/(teacher-admin)/teacher/competencies",
   "src/app/(teacher-admin)/teacher/learning-modules",
@@ -42,4 +42,9 @@ test("the student dashboard is protected and is the student landing page", () =>
 test("the teacher barrel exports only surviving workspace code", () => {
   const barrel = readFileSync("src/modules/teacher-admin/index.js", "utf8");
   assert.equal(barrel.includes('"./assessments"'), false);
+});
+
+test("the teacher dashboard is protected and is the teacher landing page", () => {
+  assert.equal(workspaceForPath("/teacher/dashboard"), ROLES.TEACHER_ADMIN);
+  assert.equal(homePathForRole(ROLES.TEACHER_ADMIN), "/teacher/dashboard");
 });

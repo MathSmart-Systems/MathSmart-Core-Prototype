@@ -7,7 +7,7 @@ export const STUDENT_ACCOUNT = Object.freeze({
 export const TEACHER_ADMIN_ACCOUNT = Object.freeze({
   email: process.env.E2E_TEACHER_ADMIN_EMAIL || process.env.LOCAL_TEACHER_ADMIN_EMAIL,
   password: process.env.E2E_TEACHER_ADMIN_PASSWORD || process.env.LOCAL_TEACHER_ADMIN_PASSWORD,
-  home: "**/teacher/students",
+  home: "**/teacher/dashboard",
 });
 
 export function hasAccount(account = TEACHER_ADMIN_ACCOUNT) {

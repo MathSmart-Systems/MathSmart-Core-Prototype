@@ -15,6 +15,12 @@ test("student signs in, sees their progress, and cannot open the teacher workspa
   await signIn(page, STUDENT_ACCOUNT);
   await expect(page.getByRole("heading", { name: "Competency progress" })).toBeVisible();
 
+  for (const width of [390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("heading", { name: "Competency progress" })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+
   await page.goto("/teacher/students");
   await expect(page).toHaveURL(/\/student\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Competency progress" })).toBeVisible();

@@ -107,11 +107,11 @@ export function LoginForm({ isConfigured }) {
 
       <button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || !isConfigured}
         className="mt-1 flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-60"
       >
         {isPending ? (
-          <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
         ) : null}
         <span>{isPending ? "Signing in…" : "Sign in"}</span>
       </button>

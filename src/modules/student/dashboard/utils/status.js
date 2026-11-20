@@ -34,18 +34,6 @@ export function diagnosticStatus(value) {
   );
 }
 
-/** `app.path_item_status` as a learner reads it. */
-export const PATH_ITEM_STATUS = Object.freeze({
-  locked: Object.freeze({ label: "Opens later", verb: "Open" }),
-  available: Object.freeze({ label: "Ready to start", verb: "Start" }),
-  in_progress: Object.freeze({ label: "In progress", verb: "Continue" }),
-  completed: Object.freeze({ label: "Finished", verb: "Review" }),
-});
-
-export function pathItemStatus(value) {
-  return PATH_ITEM_STATUS[value] ?? { label: "Ready to start", verb: "Open" };
-}
-
 /**
  * `app.mastery_band` with a shape as well as a name.
  *

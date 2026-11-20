@@ -13,7 +13,7 @@ export const ROLES = Object.freeze({
 });
 
 export const ROLE_HOME = Object.freeze({
-  [ROLES.TEACHER_ADMIN]: "/teacher/students",
+  [ROLES.TEACHER_ADMIN]: "/teacher/dashboard",
   [ROLES.STUDENT]: "/student/dashboard",
 });
 

@@ -31,6 +31,8 @@ def test_retained_runtime_and_bootstrap_routes_are_registered() -> None:
     required = {
         ("/api/v1/students/me", "GET"),
         ("/api/v1/progress/me", "GET"),
+        ("/api/v1/teacher-admin/dashboard", "GET"),
+        ("/api/v1/teacher-admin/classes", "GET"),
         # Surviving Teacher/Administrator runtime.
         ("/api/v1/students", "GET"),
         ("/api/v1/students", "POST"),
@@ -98,7 +100,6 @@ def test_removed_workflow_routes_are_not_registered() -> None:
         ("/api/v1/ai/student-feedback", "POST"),
         ("/api/v1/ai/incorrect-answer-explanation", "POST"),
         ("/api/v1/ai/remediation-support", "POST"),
-        ("/api/v1/teacher-admin/dashboard", "GET"),
         ("/api/v1/teacher-admin/analytics", "GET"),
         ("/api/v1/teacher-admin/reports/overview", "GET"),
         ("/api/v1/teacher-admin/reports/summary", "GET"),
