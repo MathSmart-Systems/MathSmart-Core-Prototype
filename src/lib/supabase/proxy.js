@@ -37,16 +37,6 @@ function redirectTo(request, supabaseResponse, pathname, notice) {
   return redirectResponse;
 }
 
-function redirectToLocalSession(request, supabaseResponse) {
-  const url = request.nextUrl.clone();
-  url.pathname = "/api/local-session";
-  url.search = "";
-  url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-  const response = NextResponse.redirect(url);
-  supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
-  return response;
-}
-
 /**
  * Protected documents must not be restored from the back/forward cache after a
  * sign-out, so they are marked uncacheable.
@@ -103,26 +93,19 @@ export async function updateSession(request) {
   // A simple mistake could make it very hard to debug issues with users being
   // randomly logged out.
   let claims = null;
-  let claimsFailed = false;
-
   try {
     const { data, error } = await supabase.auth.getClaims();
     claims = error ? null : (data?.claims ?? null);
-    claimsFailed = Boolean(error);
   } catch {
-    claimsFailed = true;
+    // The protected route below sends this request to sign-in.
   }
 
   if (!protectedPath) {
     return supabaseResponse;
   }
 
-  if (claimsFailed) {
-    return redirectToLocalSession(request, supabaseResponse);
-  }
-
   if (!claims) {
-    return redirectToLocalSession(request, supabaseResponse);
+    return redirectTo(request, supabaseResponse, LOGIN_PATH, AUTH_NOTICE.UNAUTHORIZED);
   }
 
   const role = parseTrustedRole(claims);

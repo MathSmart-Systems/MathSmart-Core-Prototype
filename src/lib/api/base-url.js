@@ -63,3 +63,24 @@ export function trimmedBaseUrl(value) {
   const trimmed = value.replace(/\/+$/, "");
   return trimmed || null;
 }
+
+export function isCurrentPreviewApi(url) {
+  const host = trustedDeploymentHost();
+  if (process.env.VERCEL_ENV !== "preview" || !host) return false;
+
+  const target = URL.parse(url);
+  return Boolean(
+    target?.origin === `https://${host}` &&
+    !target.username &&
+    !target.password &&
+    target.pathname.startsWith(`${SAME_ORIGIN_API_PATH}/`),
+  );
+}
+
+export function previewApiRequestOptions(url, options, token) {
+  if (!token || !isCurrentPreviewApi(url)) return options;
+
+  const headers = new Headers(options.headers);
+  headers.set("x-vercel-trusted-oidc-idp-token", token);
+  return { ...options, headers, redirect: "error" };
+}

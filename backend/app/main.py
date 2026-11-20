@@ -34,6 +34,7 @@ from modules.progress.router import router as progress_router
 from modules.shared.db import Database
 from modules.students.router import router as students_router
 from modules.teacher_admin.admin_router import router as teacher_admin_admin_router
+from modules.teacher_admin.dashboard_router import router as teacher_dashboard_router
 
 API_PREFIX = "/api/v1"
 
@@ -58,6 +59,7 @@ def _selected_router(
 
 
 STUDENT_ROUTES = {
+    "/students/me": {"GET"},
     "/students": {"GET", "POST"},
     "/students/drop": {"POST"},
     "/students/{student_id}": {"GET", "PATCH"},
@@ -67,6 +69,7 @@ STUDENT_ROUTES = {
 }
 
 PROGRESS_ROUTES = {
+    "/progress/me": {"GET"},
     "/learning-path/me": {"GET"},
     "/progress/{student_id}": {"GET"},
 }
@@ -231,6 +234,7 @@ def create_app(
         _selected_router(progress_router, PROGRESS_ROUTES), prefix=API_PREFIX
     )
     application.include_router(interventions_router, prefix=API_PREFIX)
+    application.include_router(teacher_dashboard_router, prefix=API_PREFIX)
     application.include_router(
         _selected_router(teacher_admin_admin_router, _teacher_admin_routes()),
         prefix=API_PREFIX,
