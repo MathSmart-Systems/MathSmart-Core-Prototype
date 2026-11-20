@@ -6,3 +6,4 @@
  * instead, which is the module's client-safe contract.
  */
 export { getVerifiedSession, requireWorkspace } from "./services/session";
+export { LoginView } from "./components/LoginView";

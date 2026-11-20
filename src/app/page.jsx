@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { ROLES, homePathForRole } from "@/lib/auth/roles";
+import { homePathForRole } from "@/lib/auth/roles";
 import { getVerifiedSession } from "@/modules/auth";
 
 export const dynamic = "force-dynamic";
@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 export default async function RootPage() {
   const session = await getVerifiedSession();
 
-  if (session.status !== "authenticated" || session.role !== ROLES.TEACHER_ADMIN) {
-    redirect("/api/local-session?next=/teacher/students");
+  if (session.status !== "authenticated" || !session.role) {
+    redirect("/login");
   }
 
   redirect(homePathForRole(session.role));

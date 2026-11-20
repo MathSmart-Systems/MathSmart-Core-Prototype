@@ -28,7 +28,8 @@ export default defineConfig({
   reporter: [["list"]],
   use: {
     baseURL,
-    trace: "on-first-retry",
+    // Sign-in actions enter environment-supplied credentials. Keep them out of traces.
+    trace: "off",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: process.env.PLAYWRIGHT_BASE_URL

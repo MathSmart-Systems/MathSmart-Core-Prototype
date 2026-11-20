@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
-import { LOGIN_PATH, ROLES, homePathForRole, workspaceForPath } from "../../../lib/auth/roles.js";
+import { ROLES, homePathForRole, workspaceForPath } from "../../../lib/auth/roles.js";
 
 const retainedRoutes = [
+  "src/app/(student)/student/dashboard/page.jsx",
   "src/app/(teacher-admin)/teacher/students/page.jsx",
   "src/app/(teacher-admin)/teacher/students/[studentId]/page.jsx",
   "src/app/(teacher-admin)/teacher/interventions/page.jsx",
@@ -13,7 +14,6 @@ const retainedRoutes = [
 ];
 
 const removedRoutes = [
-  "src/app/(student)",
   "src/app/(teacher-admin)/teacher/dashboard",
   "src/app/(teacher-admin)/teacher/assessments",
   "src/app/(teacher-admin)/teacher/competencies",
@@ -24,7 +24,7 @@ const removedRoutes = [
   "src/app/(teacher-admin)/teacher/reports-analytics",
 ];
 
-test("only the retained teacher workspace routes remain", () => {
+test("only the scoped prototype workspace routes are present", () => {
   for (const route of retainedRoutes) {
     assert.equal(existsSync(route), true, `${route} must remain available`);
   }
@@ -34,9 +34,9 @@ test("only the retained teacher workspace routes remain", () => {
   }
 });
 
-test("the removed student workspace is no longer a frontend destination", () => {
-  assert.equal(workspaceForPath("/student/dashboard"), null);
-  assert.equal(homePathForRole(ROLES.STUDENT), LOGIN_PATH);
+test("the student dashboard is protected and is the student landing page", () => {
+  assert.equal(workspaceForPath("/student/dashboard"), ROLES.STUDENT);
+  assert.equal(homePathForRole(ROLES.STUDENT), "/student/dashboard");
 });
 
 test("the teacher barrel exports only surviving workspace code", () => {

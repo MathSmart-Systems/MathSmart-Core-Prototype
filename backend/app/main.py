@@ -58,6 +58,7 @@ def _selected_router(
 
 
 STUDENT_ROUTES = {
+    "/students/me": {"GET"},
     "/students": {"GET", "POST"},
     "/students/drop": {"POST"},
     "/students/{student_id}": {"GET", "PATCH"},
@@ -67,6 +68,7 @@ STUDENT_ROUTES = {
 }
 
 PROGRESS_ROUTES = {
+    "/progress/me": {"GET"},
     "/learning-path/me": {"GET"},
     "/progress/{student_id}": {"GET"},
 }
