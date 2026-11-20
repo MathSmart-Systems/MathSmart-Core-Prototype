@@ -50,7 +50,8 @@ export function TeacherDashboardView({ model, error = null, classesUnavailable =
     startTransition(() => router.refresh());
   };
 
-  const scope = model.selectedSection ? model.selectedSection.name : "All Grade 6 sections";
+  const scope = model.selectedSection?.name
+    ?? (model.selectedSectionId ? "Selected section" : "All Grade 6 sections");
   const announcement = error
     ? ""
     : `Showing ${scope}: ${model.summary.learners ?? "unknown"} students.`;
@@ -75,10 +76,12 @@ export function TeacherDashboardView({ model, error = null, classesUnavailable =
             className="h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={model.selectedSectionId ?? ""}
             onChange={(event) => chooseSection(event.target.value || null)}
-            disabled={classesUnavailable && model.sections.length === 0}
             aria-describedby="teacher-dashboard-sections-note"
           >
             <option value="">All Grade 6 sections</option>
+            {model.selectedSectionId && !model.selectedSection ? (
+              <option value={model.selectedSectionId}>Selected section</option>
+            ) : null}
             {model.sections.map((section) => (
               <option key={section.id} value={section.id}>
                 {section.name}
@@ -132,7 +135,7 @@ export function TeacherDashboardView({ model, error = null, classesUnavailable =
           {model.isEmpty ? (
             <section className="rounded-xl border border-border bg-card px-4 py-6">
               <h2 className="font-display text-lg font-semibold text-foreground">
-                No students in {model.selectedSection ? model.selectedSection.name : "Grade 6"} yet
+                No students in {model.selectedSection?.name ?? (model.selectedSectionId ? "this section" : "Grade 6")} yet
               </h2>
               <p className="mt-1 max-w-prose text-sm text-muted-foreground">
                 Enrol learners from{" "}

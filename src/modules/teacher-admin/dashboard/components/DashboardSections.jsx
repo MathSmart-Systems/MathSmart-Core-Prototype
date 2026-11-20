@@ -210,30 +210,23 @@ export function PriorityLearners({ priority }) {
                       View record
                     </Link>
                   </Button>
-                  <Button asChild size="sm">
-                    <Link
-                      id={`${FIELD_IDS.RECORD_INTERVENTION_BTN_PREFIX}${learner.id}`}
-                      href={TEACHER_ROUTES.learnerCases(learner.id)}
-                      aria-label={`Open the intervention cases for ${learner.fullName}`}
-                    >
-                      Open cases
-                    </Link>
-                  </Button>
+                  {learner.openCases > 0 ? (
+                    <Button asChild size="sm">
+                      <Link
+                        id={`${FIELD_IDS.RECORD_INTERVENTION_BTN_PREFIX}${learner.id}`}
+                        href={TEACHER_ROUTES.learnerCases(learner.id)}
+                        aria-label={`Open the intervention cases for ${learner.fullName}`}
+                      >
+                        Open cases
+                      </Link>
+                    </Button>
+                  ) : null}
                 </div>
               </li>
             ))}
           </ul>
           {hidden > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              {hidden} more in the{" "}
-              <Link
-                href={TEACHER_ROUTES.INTERVENTIONS}
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                intervention queue
-              </Link>
-              .
-            </p>
+            <p className="text-xs text-muted-foreground">Open the student roster to see more learners.</p>
           ) : null}
         </>
       )}

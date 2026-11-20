@@ -180,7 +180,7 @@ test("an empty class is only empty when the reply said so", () => {
   assert.equal(buildDashboardModel().isEmpty, false);
 });
 
-test("the selected section is only selected when it exists", () => {
+test("the active filter survives a section missing from the directory", () => {
   const sections = [{ id: "s1", name: "Rizal", learner_count: 0 }];
 
   const chosen = buildDashboardModel({ dashboard: DASHBOARD, sections, selectedSectionId: "s1" });
@@ -190,6 +190,7 @@ test("the selected section is only selected when it exists", () => {
   // Zero learners is shown as zero, not hidden.
   assert.equal(chosen.sections[0].learnerCount, 0);
   assert.equal(unknown.selectedSection, null);
+  assert.equal(unknown.selectedSectionId, "gone");
 });
 
 test("recent activity keeps the recorded score, rounded for display", () => {

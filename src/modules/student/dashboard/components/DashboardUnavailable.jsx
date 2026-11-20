@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { TriangleAlert, UserRoundSearch } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 
 import { RetryButton } from "./RetryButton";
 
@@ -46,9 +44,8 @@ const FAILURE = Object.freeze({
   },
   session: {
     heading: "Please sign in again",
-    body: "Your session has ended, so MathSmart cannot show your progress. Sign in again and you will come straight back here.",
+    body: "Open the workspace menu, log out, and sign in again to reload your progress.",
     retry: false,
-    signIn: true,
   },
   account: {
     heading: "Your account is not active",
@@ -82,11 +79,6 @@ export function DashboardServiceError({ reason = "unavailable" }) {
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
           {copy.retry ? <RetryButton label="Try again" /> : null}
-          {copy.signIn ? (
-            <Button asChild className="h-11 px-5">
-              <Link href="/login">Sign in again</Link>
-            </Button>
-          ) : null}
         </div>
       </section>
     </Frame>

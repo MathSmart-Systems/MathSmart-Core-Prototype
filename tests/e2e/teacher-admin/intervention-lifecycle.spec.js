@@ -108,7 +108,6 @@ describe("teacher interventions, end to end", () => {
 
   test.beforeEach(async ({ page }) => {
     await signIn(page, TEACHER_ADMIN_ACCOUNT);
-    await page.waitForURL("**/teacher/students");
     await page.goto("/teacher/interventions");
     await expect(
       page.getByRole("heading", { name: "Teacher Intervention Dashboard" }),

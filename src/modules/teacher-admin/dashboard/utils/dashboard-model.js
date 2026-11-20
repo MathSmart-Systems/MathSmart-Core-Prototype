@@ -163,7 +163,7 @@ export function buildDashboardModel({ dashboard = null, sections = [], selectedS
   const diagnosticCompleted = count(diagnostic.completed);
 
   return {
-    selectedSectionId: selectedSection ? selectedSection.id : null,
+    selectedSectionId,
     selectedSection,
     sections: sectionList,
     summary: {

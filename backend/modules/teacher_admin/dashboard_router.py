@@ -48,7 +48,8 @@ def _learner(row: Any) -> dict[str, Any]:
 
 def _competency(row: Any) -> dict[str, Any]:
     """A competency rollup, with the average withheld for a small cohort."""
-    hidden = service.suppressed(row["learners_tracked"])
+    hidden = service.suppressed(row["current_contributors"])
+    diagnostic_hidden = service.suppressed(row["diagnostic_contributors"])
     return {
         "competency_id": str(row["competency_id"]),
         "code": row["code"],
@@ -63,11 +64,11 @@ def _competency(row: Any) -> dict[str, Any]:
             None if hidden else _number(row["average_current_score"])
         ),
         "average_diagnostic_score": (
-            None if hidden else _number(row["average_diagnostic_score"])
+            None if diagnostic_hidden else _number(row["average_diagnostic_score"])
         ),
         "growth": (
             None
-            if hidden
+            if hidden or diagnostic_hidden
             else service.growth(
                 row["average_current_score"], row["average_diagnostic_score"]
             )
@@ -200,10 +201,6 @@ async def list_classes(
                     "full_name": row["adviser_name"],
                 },
                 "learner_count": row["learner_count"] or 0,
-                "needs_intervention_count": row["needs_intervention_count"] or 0,
-                "improving_count": row["improving_count"] or 0,
-                "mastered_count": row["mastered_count"] or 0,
-                "average_current_score": _number(row["average_current_score"]),
             }
             for row in rows
         ]

@@ -30,7 +30,7 @@ RECENT = "union all"
 DASHBOARD = "scoped_learners"
 
 
-SECTIONS = "from app.section_performance_summary"
+SECTIONS = "order by sections.name"
 
 
 LEARNERS = "from app.student_performance_summary"
@@ -100,6 +100,8 @@ COMPETENCY_ROW = {
     "grade_id": GRADE,
     "status": "published",
     "learners_tracked": 20,
+    "current_contributors": 20,
+    "diagnostic_contributors": 20,
     "mastered_count": 4,
     "developing_count": 10,
     "needs_improvement_count": 6,
@@ -176,6 +178,7 @@ def test_classes_report_their_adviser():
     assert section["name"] == "Rizal"
     assert section["adviser"]["full_name"] == "Maria Santos"
     assert section["learner_count"] == 20
+    assert "average_current_score" not in section
 
 
 def _args_for(connection, fragment):
@@ -287,7 +290,9 @@ def test_a_competency_carries_the_databases_own_band():
 
 
 def test_a_small_cohort_hides_the_band_with_the_average():
-    small = dict(COMPETENCY_ROW, learners_tracked=2)
+    small = dict(
+        COMPETENCY_ROW, learners_tracked=2, current_contributors=2, diagnostic_contributors=2
+    )
     client = build_client(reporting_connection(**{COMPETENCIES: [small]}))
 
     competency = client.get(
@@ -297,3 +302,15 @@ def test_a_small_cohort_hides_the_band_with_the_average():
     assert competency["suppressed"] is True
     assert competency["average_current_score"] is None
     assert competency["average_mastery_band"] is None
+
+
+def test_a_diagnostic_average_needs_five_actual_contributors():
+    sparse = dict(COMPETENCY_ROW, learners_tracked=7, diagnostic_contributors=1)
+    client = build_client(reporting_connection(**{COMPETENCIES: [sparse]}))
+
+    result = client.get("/api/v1/teacher-admin/dashboard", headers=ADVISER_HEADERS)
+    competency = result.json()["data"]["competencies"][0]
+
+    assert competency["average_current_score"] == 58
+    assert competency["average_diagnostic_score"] is None
+    assert competency["growth"] is None

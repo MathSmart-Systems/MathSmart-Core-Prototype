@@ -148,26 +148,24 @@ limit $3
 
 _SECTIONS_SQL = """
 select
-  section_performance_summary.section_id,
-  section_performance_summary.grade_id,
-  section_performance_summary.section_name,
-  section_performance_summary.adviser_id,
+  sections.section_id,
+  sections.grade_id,
+  sections.name as section_name,
+  sections.adviser_id,
   adviser.full_name as adviser_name,
-  section_performance_summary.is_active,
-  section_performance_summary.learner_count,
-  section_performance_summary.active_count,
-  section_performance_summary.needs_intervention_count,
-  section_performance_summary.improving_count,
-  section_performance_summary.mastered_count,
-  section_performance_summary.inactive_count,
-  section_performance_summary.average_current_score
-from app.section_performance_summary
+  sections.is_active,
+  (select count(*)
+     from app.student_profiles
+     join app.user_profiles on user_profiles.user_id = student_profiles.user_id
+    where student_profiles.section_id = sections.section_id
+      and user_profiles.account_status = 'active') as learner_count
+from app.sections
 left join app.teacher_admin_profiles
-  on teacher_admin_profiles.teacher_admin_id = section_performance_summary.adviser_id
+  on teacher_admin_profiles.teacher_admin_id = sections.adviser_id
 left join app.user_profiles as adviser
   on adviser.user_id = teacher_admin_profiles.user_id
-where ($1::uuid is null or section_performance_summary.grade_id = $1)
-order by section_performance_summary.section_name
+where ($1::uuid is null or sections.grade_id = $1)
+order by sections.name
 """
 
 
@@ -217,6 +215,8 @@ select
   competencies.grade_id,
   competencies.status,
   count(competency_progress.progress_id) as learners_tracked,
+  count(competency_progress.current_score) as current_contributors,
+  count(competency_progress.diagnostic_score) as diagnostic_contributors,
   count(*) filter (where competency_progress.mastery_band = 'Mastered')
     as mastered_count,
   count(*) filter (where competency_progress.mastery_band = 'Developing')

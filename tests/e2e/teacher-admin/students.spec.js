@@ -244,7 +244,7 @@ async function learnerWithNote(page) {
 describe("teacher students workspace", () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, TEACHER_ADMIN_ACCOUNT);
-    await page.waitForURL("**/teacher/students");
+    await page.goto("/teacher/students");
   });
 
   // ─── The roster ──────────────────────────────────────────────────
